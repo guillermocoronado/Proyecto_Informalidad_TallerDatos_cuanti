@@ -18,4 +18,27 @@ mod400 <- import("datos/crudos/Enaho01A-2025-400.csv", encoding = "Latin-1")
 mod500 <- import("datos/crudos/Enaho01A-2025-500.csv", encoding = "Latin-1")
 mod_gob <- import("datos/crudos/Enaho01B-2025-1.csv", encoding = "Latin-1")
 
-#3.
+#3.Unión de bases----------------------------------
+
+keys_hogar <- c("AÑO", "MES", "CONGLOME", "VIVIENDA", "HOGAR", "UBIGEO",
+                "DOMINIO", "ESTRATO", "NCONGLOME", "SUB_CONGLOME")
+
+keys_personas <- c(keys_hogar, "CODPERSO", "CODINFOR", "P203", "P204", "P205", "P206", "P207",
+                   "P208A", "P209")
+
+enaho_2025 <- mod400 %>% 
+  left_join(mod300, by = keys_personas) %>% 
+  left_join(mod500, by = keys_personas)
+
+keys_gob <- c(keys_hogar, "CODPERSO", "CODINFOR")
+
+enaho_2025 <- enaho_2025 %>%
+  left_join(mod_gob, by = keys_gob)
+
+gc()
+
+#4. Exportamos base de datos creada------------------------
+install.packages("arrow")
+library(arrow)
+renv::snapshot()
+
