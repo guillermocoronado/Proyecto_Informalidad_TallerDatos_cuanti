@@ -15,3 +15,5 @@ dir.create("docs")
 
 
 #Enlace con Git y GitHub
+install.packages("usethis")
+usethis::use_git()
