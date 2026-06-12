@@ -41,4 +41,5 @@ gc()
 install.packages("arrow")
 library(arrow)
 renv::snapshot()
+write_parquet(enaho_2025, "datos/procesados/enaho_2025_120626.parquet")
 
