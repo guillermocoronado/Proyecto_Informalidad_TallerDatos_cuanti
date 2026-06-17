@@ -20,16 +20,20 @@ mod_gob <- import("datos/crudos/Enaho01B-2025-1.csv", encoding = "Latin-1")
 
 #3.Unión de bases----------------------------------
 
+#Definimos las variables "llave" para unir las bases de datos
 keys_hogar <- c("AÑO", "MES", "CONGLOME", "VIVIENDA", "HOGAR", "UBIGEO",
-                "DOMINIO", "ESTRATO", "NCONGLOME", "SUB_CONGLOME")
+                "DOMINIO", "ESTRATO", "NCONGLOME", "SUB_CONGLOME") 
 
+#Observamos que estas variables se repiten en los módulos de interés, por lo que añadimos a nuestras keys
 keys_personas <- c(keys_hogar, "CODPERSO", "CODINFOR", "P203", "P204", "P205", "P206", "P207",
                    "P208A", "P209")
 
+#Unimos módulo de educación, salud, empleo e ingresos
 enaho_2025 <- mod400 %>% 
   left_join(mod300, by = keys_personas) %>% 
   left_join(mod500, by = keys_personas)
 
+#Unimos con módulo de gobernabilidad porque tiene keys diferentes
 keys_gob <- c(keys_hogar, "CODPERSO", "CODINFOR")
 
 enaho_2025 <- enaho_2025 %>%
