@@ -27,6 +27,10 @@ keys_hogar <- c("AÑO", "MES", "CONGLOME", "VIVIENDA", "HOGAR", "UBIGEO",
 #Observamos que estas variables se repiten en los módulos de interés, por lo que añadimos a nuestras keys
 keys_personas <- c(keys_hogar, "CODPERSO", "CODINFOR", "P203", "P204", "P205", "P206", "P207",
                    "P208A", "P209")
+#P203-P206: Preguntas sobre la relación con el jefe de hogar
+#P207: Sexo
+#P208A: Edad
+#P209: Estado civil
 
 #Unimos módulo de educación, salud, empleo e ingresos
 enaho_2025 <- mod400 %>% 
