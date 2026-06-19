@@ -206,29 +206,43 @@ enaho_tratada <- enaho_seleccion %>%
   drop_na(lengua_materna)
 
 # ------------------------------------------------------------------------------
-# CASO 2: MAR (Missing At Random)
+# CASO 2: Combinación de MCAR (Estructural) y MAR (Missing at Random)
 # Variable: confianza_congreso
-# Problema: No hay 9s, pero hay celdas vacías (NA) que pueden depender de otras variables (ej.: educacion).
-# Estrategia sugerida: Imputación Simple (Mediana / Moda) - tener cuidado!
+# Problema: Hay celdas vacías por diseño (menores de 18 años no responden) 
+#           y celdas vacías de adultos que no respondieron (MAR).
+# Estrategia: 1) Eliminar casos de menores de 18 (Ausencia estructural) 
+#             2) Imputación Simple (Mediana) para los adultos restantes
 # ------------------------------------------------------------------------------
 
-# PASO 2.1: Diagnóstico
-# Como mencionaste que no hay nueves, solo verificamos cuántos NAs puros tenemos.
+# PASO 2.1: Diagnóstico cruzado con Edad
 diagnostico_confianza <- enaho_tratada %>%
+  mutate(grupo_edad = ifelse(edad < 18, "Menor de 18", "18 a más")) %>%
+  group_by(grupo_edad) %>%
   summarise(
-    total_nas = sum(is.na(confianza_congreso)),
-    porcentaje = mean(is.na(confianza_congreso)) * 100
+    total_casos = n(),
+    nas_en_confianza = sum(is.na(confianza_congreso)),
+    porcentaje_na_grupo = round((nas_en_confianza / total_casos) * 100, 1)
   )
+
 print(diagnostico_confianza)
 
-# PASO 2.2: Tratamiento (Imputación Simple)
-# Dado que es una variable categórica/ordinal (Likert de confianza), la media 
-# no tiene sentido. La diapositiva permite usar la Mediana o la Moda. 
-# Usaremos la Mediana (el valor central de confianza).
-mediana_confianza <- median(enaho_tratada$confianza_congreso, na.rm = TRUE)
-
+# PASO 2.2: Tratamiento en dos fases
 enaho_tratada <- enaho_tratada %>%
+
+  # FASE A: Eliminación Estructural
+  # Filtramos la base para quitar a todos los menores de 18 que tienen NA en esta pregunta.
+  filter(!(is.na(confianza_congreso) & edad < 18)) %>%
+  
+  # FASE B: Imputación Simple (MAR)
+  # Ahora que la base solo tiene adultos, rellenamos a los que no respondieron
+  # utilizando la mediana de la confianza institucional.
   mutate(
-    # replace_na busca los vacíos y los rellena con el valor que le indiquemos
-    confianza_congreso = replace_na(confianza_congreso, mediana_confianza)
+    confianza_congreso = replace_na(
+      confianza_congreso, 
+      median(confianza_congreso, na.rm = TRUE)
+    )
   )
+
+# Verificación
+sum(is.na(enaho_tratada$confianza_congreso)) # Debería arrojar 0
+
