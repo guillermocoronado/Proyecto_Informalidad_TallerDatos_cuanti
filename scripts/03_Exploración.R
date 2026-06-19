@@ -250,7 +250,7 @@ grafico_negro <- ggplot(enaho_explorar %>% filter(!is.na(formalidad_sector) & !i
 print(grafico_negro)
 
 # ------------------------------------------------------------------------------
-# 4.2 Tabla Bivariada Múltiple: Perfil de Vulnerabilidad
+# 4.2 Tabla Bivariada Múltiple: Perfil de Vulnerabilidad (Categórica vs. Categórica)
 # ------------------------------------------------------------------------------
 datos_largos <- enaho_explorar %>%
   filter(!is.na(formalidad_empleo)) %>%
@@ -311,6 +311,7 @@ tabla_perfil_word
 # 4.3 Continua vs Categórica: Brecha salarial por Sexo según Condición de Formalidad (Boxplot)
 # ------------------------------------------------------------------------------
 install.packages("quantreg") #Lo necesitamos para poder hacer un boxplot usando el factor de expansión
+renv::snapshot()
 
 datos_boxplot <- enaho_explorar %>% 
   filter(
@@ -347,13 +348,13 @@ print(grafico_brecha_sexo)
 # ------------------------------------------------------------------------------
 # 4.5 Continua vs Categórica: Índice de Confianza vs Empleo (Boxplot)
 # ------------------------------------------------------------------------------
-grafico_confianza <- ggplot(enaho_explorar %>% filter(!is.na(empleo_laboral)), 
-                            aes(x = empleo_laboral, y = indice_confianza, fill = empleo_laboral, weight = factorA07)) +
+grafico_confianza <- ggplot(enaho_explorar %>% filter(!is.na(formalidad_empleo)), 
+                            aes(x = formalidad_empleo, y = indice_confianza, fill = formalidad_empleo, weight = factorA07)) +
   geom_boxplot(alpha = 0.7, outlier.color = "red", outlier.size = 1, outlier.alpha = 0.3) +
   labs(
-    title = "Gráfico 5. Índice de Confianza Institucional según condición de empleo",
-    subtitle = "PEA Ocupada (18 a más años), Perú 2025",
-    x = "Condición de empleo laboral",
+    title = "Gráfico 5. Perú: Índice de Confianza Institucional según condición de formalidad en el empleo, 2025",
+    subtitle = "PEA Ocupada (18 a más años)",
+    x = "Condición de  formalidad en el empleo",
     y = "Índice de confianza (0 = Nula, 1 = Plena)",
     caption = "Fuente: ENAHO 2025 | Módulo 1B.\nNota: Índice normalizado basado en 21 instituciones."
   ) +
@@ -366,16 +367,3 @@ print(grafico_confianza)
 # 5. EXPORTACIÓN DE TABLAS Y GRÁFICOS
 # ==============================================================================
 
-# Tablas (Word)
-save_as_docx(tabla_uni_word, path = "outputs/Tabla1_Empleo_Expandido.docx")
-
-# Si quieres exportar las tablas de gtsummary a Word, usamos as_flex_table()
-tabla_trabajo_negro %>% as_flex_table() %>% save_as_docx(path = "outputs/Tabla2_TrabajoNegro.docx")
-tabla_perfil_empleo %>% as_flex_table() %>% save_as_docx(path = "outputs/Tabla3_PerfilSociodemografico.docx")
-
-# Gráficos (PNG)
-ggsave("outputs/Grafico1_Histograma_Ingresos.png", plot = grafico_hist, width = 8, height = 6, bg="white")
-ggsave("outputs/Grafico2_TrabajoNegro.png", plot = grafico_negro, width = 8, height = 6, bg="white")
-ggsave("outputs/Grafico3_Boxplot_Sexo_Ingresos.png", plot = grafico_brecha_sexo, width = 8, height = 6, bg="white")
-ggsave("outputs/Grafico4_Barras_Pensiones.png", plot = grafico_pensiones, width = 8, height = 6, bg="white")
-ggsave("outputs/Grafico5_Boxplot_Confianza.png", plot = grafico_confianza, width = 8, height = 6, bg="white")
