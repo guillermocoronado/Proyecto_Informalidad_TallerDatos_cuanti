@@ -195,32 +195,52 @@ print(grafico_hist)
 # ------------------------------------------------------------------------------
 # 4.1 Categórica vs Categórica: Sector Informal vs. Empleo Informal
 # ------------------------------------------------------------------------------
-# Usamos tbl_svysummary para que gtsummary lea el factor de expansión
-tabla_trabajo_negro <- enaho_diseno %>%
-  filter(!is.na(sector_laboral) & !is.na(empleo_laboral)) %>%
-  tbl_svysummary(
-    by = empleo_laboral,
-    include = sector_laboral,
-    statistic = list(all_categorical() ~ "{n_unweighted} ({p}%)"), # Mostramos el 'n' muestral pero el '%' poblacional
+#Calculamos N poblacional y % por fila usando srvyr
+tabla_trabajo_negro_datos <- enaho_diseno %>%
+  filter(!is.na(formalidad_sector) & !is.na(formalidad_empleo)) %>%
+  group_by(formalidad_sector, formalidad_empleo) %>%
+  summarise(
+    Poblacion = survey_total(vartype = NULL)
   ) %>%
-  add_overall() %>%
-  modify_caption("**Tabla 2. Matriz de Sector y Empleo Laboral (Porcentajes Expandidos)**") %>%
-  modify_footnote(all_stat_cols() ~ "Fuente: ENAHO 2025. | n = Casos en la muestra, % = Proporción poblacional") %>%
-  bold_labels()
+  # Agrupamos por el sector para que el porcentaje sume 100% en cada fila
+  group_by(formalidad_sector) %>%
+  mutate(
+    Porcentaje = (Poblacion / sum(Poblacion)) * 100,
+    # Unimos el N y el % en una sola celda para que se vea ordenado
+    Celda = paste0(scales::comma(round(Poblacion, 0)), " (", round(Porcentaje, 1), "%)")
+  ) %>%
+  # Damos formato de matriz (filas = sector, columnas = empleo)
+  select(formalidad_sector, formalidad_empleo, Celda) %>%
+  pivot_wider(names_from = formalidad_empleo, values_from = Celda) %>%
+  rename(`Sector Económico` = formalidad_sector)
 
-tabla_trabajo_negro
+# 2. Le damos el mismo diseño estético de la Tabla 1
+tabla_negro_word <- flextable(tabla_trabajo_negro_datos) %>%
+  add_header_lines(values = "Tabla 2. Perú: Condición de formalidad del empleo según formalidad del sector") %>%
+  add_footer_lines(values = "Fuente: ENAHO 2025. Cálculos usando el factor de expansión anual.") %>%
+  autofit() %>%                     
+  theme_vanilla() %>%               
+  align(align = "center", part = "all") %>% 
+  align(j = 1, align = "left", part = "body") %>% 
+  bold(part = "header") %>%
+  align(align = "left", part = "footer") %>%                     
+  fontsize(size = 9, part = "footer") %>%                        
+  hline_bottom(part = "footer", border = officer::fp_border(width = 0)) 
+
+# Ver la tabla en el visor
+tabla_negro_word
+
 
 # Gráfico de Trabajo en Negro (Apilado al 100% y Ponderado)
-grafico_negro <- ggplot(enaho_explorar %>% filter(!is.na(sector_laboral) & !is.na(empleo_laboral)), 
-                        aes(x = sector_laboral, fill = empleo_laboral, weight = factorA07)) +
+grafico_negro <- ggplot(enaho_explorar %>% filter(!is.na(formalidad_sector) & !is.na(formalidad_empleo)), 
+                        aes(x = formalidad_sector, fill = formalidad_empleo, weight = factorA07)) +
   geom_bar(position = "fill", alpha = 0.8) +
   scale_y_continuous(labels = scales::percent) +
   labs(
-    title = "Gráfico 2. Composición del empleo según sector de la empresa",
-    subtitle = "Visibilizando el 'Trabajo en Negro' en el Sector Formal",
-    x = "Sector de la empresa (Tenencia de RUC)",
+    title = "Gráfico 2. Perú: Condición de formalidad del empleo según formalidad del sector, 2025",
+    x = "Condición de formalidad de la empresa",
     y = "Proporción de trabajadores (%)",
-    fill = "Condición del empleo:",
+    fill = "Condición de formalidad del empleo:",
     caption = "Fuente: ENAHO 2025.\nNota: Ponderado con factorA07. Sector formal = con RUC. Empleo formal = con contrato."
   ) +
   theme_minimal() +
@@ -232,19 +252,60 @@ print(grafico_negro)
 # ------------------------------------------------------------------------------
 # 4.2 Tabla Bivariada Múltiple: Perfil de Vulnerabilidad
 # ------------------------------------------------------------------------------
-tabla_perfil_empleo <- enaho_diseno %>%
-  filter(!is.na(empleo_laboral)) %>%
-  tbl_svysummary(
-    by = empleo_laboral, 
-    include = c(sexo, discapacidad, afiliacion_salud, afiliacion_pensiones),
-    statistic = list(all_categorical() ~ "{n_unweighted} ({p}%)")
+datos_largos <- enaho_explorar %>%
+  filter(!is.na(formalidad_empleo)) %>%
+  select(conglome, estrato, factorA07, formalidad_empleo, sexo, discapacidad, afiliacion_salud, afiliacion_pensiones) %>%
+  pivot_longer(
+    cols = c(sexo, discapacidad, afiliacion_salud, afiliacion_pensiones),
+    names_to = "Caracteristica",
+    values_to = "Categoria"
   ) %>%
-  add_overall() %>% 
-  modify_caption("**Tabla 3. Perfil sociodemográfico y de protección social según empleo**") %>%
-  modify_footnote(all_stat_cols() ~ "Fuente: ENAHO 2025. | % ajustados por factor de expansión (factorA07).") %>%
-  bold_labels()
+  filter(!is.na(Categoria))
 
-tabla_perfil_empleo
+diseno_largo <- datos_largos %>%
+  as_survey_design(ids = conglome, strata = estrato, weights = factorA07, nest = TRUE)
+
+totales_general <- diseno_largo %>%
+  group_by(Caracteristica, Categoria) %>%
+  summarise(Poblacion = survey_total(vartype = NULL)) %>%
+  group_by(Caracteristica) %>%
+  mutate(
+    Porcentaje = (Poblacion / sum(Poblacion)) * 100,
+    Total = paste0(scales::comma(round(Poblacion, 0)), " (", round(Porcentaje, 1), "%)")
+  ) %>%
+  select(Caracteristica, Categoria, Total)
+
+totales_empleo <- diseno_largo %>%
+  group_by(Caracteristica, Categoria, formalidad_empleo) %>%
+  summarise(Poblacion = survey_total(vartype = NULL)) %>%
+  group_by(Caracteristica, formalidad_empleo) %>%
+  mutate(
+    Porcentaje = (Poblacion / sum(Poblacion)) * 100,
+    Celda = paste0(scales::comma(round(Poblacion, 0)), " (", round(Porcentaje, 1), "%)")
+  ) %>%
+  select(Caracteristica, Categoria, formalidad_empleo, Celda) %>%
+  pivot_wider(names_from = formalidad_empleo, values_from = Celda)
+
+tabla_perfil_datos <- totales_general %>%
+  left_join(totales_empleo, by = c("Caracteristica", "Categoria")) %>%
+  mutate(Caracteristica = case_when(
+    Caracteristica == "sexo" ~ "Sexo",
+    Caracteristica == "discapacidad" ~ "Condición de Discapacidad",
+    Caracteristica == "afiliacion_salud" ~ "Afiliación a Salud",
+    Caracteristica == "afiliacion_pensiones" ~ "Sistema de Pensiones"
+  )) %>%
+  arrange(Caracteristica)
+
+tabla_perfil_word <- flextable(tabla_perfil_datos) %>%
+  add_header_lines(values = "Tabla 3. Perú: Perfil sociodemográfico y de protección social según condición de formalidad en el empleo") %>%
+  add_footer_lines(values = "Fuente: ENAHO 2025. Cálculos usando el factor de expansión anual") %>%
+  autofit() %>% theme_vanilla() %>% align(align = "center", part = "all") %>% 
+  align(j = 1:2, align = "left", part = "body") %>% bold(part = "header") %>%
+  merge_v(j = "Caracteristica") %>%
+  align(align = "left", part = "footer") %>% fontsize(size = 9, part = "footer") %>% 
+  hline_bottom(part = "footer", border = officer::fp_border(width = 0))
+
+tabla_perfil_word
 
 # ------------------------------------------------------------------------------
 # 4.3 Continua vs Categórica: Brecha salarial por Sexo (Boxplot)
