@@ -227,7 +227,7 @@ diagnostico_confianza <- enaho_tratada %>%
 print(diagnostico_confianza)
 
 # PASO 2.2: Tratamiento en dos fases
-enaho_tratada <- enaho_tratada %>%
+enaho_tratada_2 <- enaho_tratada %>%
 
   # FASE A: Eliminación Estructural
   # Filtramos la base para quitar a todos los menores de 18 que tienen NA en esta pregunta.
@@ -243,6 +243,68 @@ enaho_tratada <- enaho_tratada %>%
     )
   )
 
+
 # Verificación
-sum(is.na(enaho_tratada$confianza_congreso)) # Debería arrojar 0
+sum(is.na(enaho_tratada_2$confianza_congreso)) # Debería arrojar 0
+
+# ------------------------------------------------------------------------------
+# CASO 3: Combinación de MCAR (Estructural por Ocupación) y MNAR
+# Variable: ingreso_prin
+# Problema: Hay celdas vacías por diseño (los inactivos/desempleados no tienen ingresos) 
+#           y celdas con "999999" / vacías de informales que ocultan su sueldo (MNAR).
+# Estrategia: 1) Definir a los Ocupados (MTPE) y filtrar la base 
+#             2) Imputación Condicionada (Mediana según Nivel Educativo)
+# ------------------------------------------------------------------------------
+
+# PASO 3.1: Diagnóstico cruzado con la Condición de Ocupación
+diagnostico_ingreso <- enaho_tratada %>%
+  # Creamos temporalmente la variable "condicion_ocupacion"
+  mutate(
+    condicion_ocupacion = ifelse(
+      trabajo_semana_pasada == 1 | empleo_fijo_volvera == 1 | negocio_volvera == 1, 
+      "PEA Ocupada", 
+      "No Ocupado (Desempleado/Inactivo)"
+    )
+  ) %>%
+  group_by(condicion_ocupacion) %>%
+  summarise(
+    total_casos = n(),
+    nas_en_blanco = sum(is.na(ingreso_prin)),
+    nas_ocultos_999999 = sum(ingreso_prin == 999999, na.rm = TRUE)
+  )
+
+print(diagnostico_ingreso)
+
+# PASO 3.2: Tratamiento en dos fases
+enaho_tratada_3 <- enaho_tratada %>%
+  
+  # FASE A: Eliminación Estructural (Filtro de Ocupados)
+  # Nos quedamos estrictamente con el universo de nuestro proyecto: La PEA Ocupada.
+  # (Tienen que tener '1' en al menos una de las tres preguntas filtro).
+  filter(trabajo_semana_pasada == 1 | empleo_fijo_volvera == 1 | negocio_volvera == 1) %>%
+  
+  # Convertimos el código del INEI "999999" a un NA real para los que sí 
+  # son PEA Ocupada pero decidieron no declarar cuánto ganan.
+  mutate(ingreso_prin = ifelse(ingreso_prin == 999999, NA, ingreso_prin)) %>%
+  
+  # FASE B: Imputación Condicionada (MNAR)
+  # Agrupamos a las personas por su nivel educativo para no imputar a ciegas.
+  group_by(nivel_edu) %>%
+  mutate(
+    ingreso_prin = ifelse(
+      is.na(ingreso_prin), 
+      median(ingreso_prin, na.rm = TRUE), # Imputa la mediana de su propio grupo
+      ingreso_prin
+    )
+  ) %>%
+  ungroup() # Desagrupamos para evitar errores en cruces futuros
+
+sum(is.na(enaho_tratada_3$ingreso_prin))
+
+# ------------------------------------------------------------------------------
+# Y SI HACEMOS IMPUTACIÓN MÚLTIPLE?
+# ------------------------------------------------------------------------------
+
+#Preparamos el paquete "mice"
+install.packages("mice")
 
