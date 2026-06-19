@@ -309,3 +309,65 @@ sum(is.na(enaho_tratada_3$ingreso_prin))
 install.packages("mice")
 library(mice)
 renv::snapshot()
+
+#Preparamos los datos
+
+# Asumimos que partimos de nuestra base donde ya filtramos a la PEA Ocupada 
+# y convertimos el "999999" en NA reales para ingreso_prin.
+
+# REGLA DE ORO DE MICE: ¡Nunca le des toda la base de datos!
+# Extraemos solo la variable a imputar y las variables que teóricamente 
+# explican el ingreso (predictores sociodemográficos y laborales).
+
+enaho_tratada_4 <- enaho_tratada %>%
+  filter(trabajo_semana_pasada == 1 | empleo_fijo_volvera == 1 | negocio_volvera == 1)
+
+datos_para_imputar <- enaho_tratada_4 %>%
+  select(
+    ingreso_prin,     # La variable con NAs a rellenar
+    edad,             # Predictor continuo
+    sexo,             # Predictor categórico
+    nivel_edu,        # Predictor ordinal
+    categoria_ocupacional,   # Predictor laboral (clave para informalidad)
+    tamano_empresa    # Predictor estructural
+  )
+
+#EL MODELO MICE (Multiple Imputation by Chained Equations)
+
+# Ejecutamos el algoritmo. 
+# m = 5: Crea 5 universos paralelos (bases de datos) con diferentes imputaciones.
+# maxit = 5: Número de iteraciones para estabilizar el modelo.
+# method = "pmm": Predictive Mean Matching (Emparejamiento de Medias Predictivas).
+# seed: Fijamos una semilla para que a toda la clase le salga el mismo resultado.
+
+set.seed(2026) #reproducibilidad
+modelo_mice <- mice(
+  data = datos_para_imputar, 
+  m = 5, 
+  maxit = 5, 
+  method = "pmm", 
+  printFlag = TRUE # Muestra el progreso en consola para que los alumnos lo vean
+)
+
+#Diagnóstico del modelo
+
+# Podemos ver un resumen de lo que hizo el algoritmo
+summary(modelo_mice)
+
+# Visualización clave: Comparamos la distribución original (azul) con las 
+# 5 imputaciones generadas (rojo). Si las líneas se superponen bien, el modelo es válido.
+densityplot(modelo_mice)
+
+#Extracción de la base completa
+
+# Una vez conformes, extraemos la primera de las 5 bases imputadas para 
+# continuar con nuestro análisis descriptivo.
+base_imputada_final <- complete(modelo_mice, 1)
+
+# Verificamos que hemos vencido a los NAs en ingresos manteniendo la estructura
+summary(base_imputada_final$ingreso_prin)
+sum(is.na(base_imputada_final$ingreso_prin)) # Resultado: 0
+
+# (Opcional) Podemos devolver esta columna imputada a nuestra base maestra
+enaho_tratada_final <- enaho_tratada_4 %>%
+  mutate(ingreso_prin_imputado = base_imputada_final$ingreso_prin)
