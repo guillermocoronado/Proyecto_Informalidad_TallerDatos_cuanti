@@ -172,3 +172,63 @@ reporte_nas <- enaho_seleccion %>%
   arrange(desc(porcentaje_na))
 
 write_csv(reporte_nas, "outputs/Reporte_Datos_Perdidos_ENAHO.csv")
+
+table(enaho_seleccion$confianza_congreso, useNA = "ifany")
+sum(is.na(enaho_seleccion$ingreso_prin))
+sum(enaho_seleccion$ingreso_prin == 999999, na.rm = TRUE)
+
+# ------------------------------------------------------------------------------
+# 4. TRATAMIENTO DE NAs---------------------------------------------------------
+# ------------------------------------------------------------------------------
+
+# ------------------------------------------------------------------------------
+# CASO 1: MCAR (Missing Completely At Random) / Ausencia Estructural
+# Variable: lengua_materna
+# Problema: Hay "99" (No especificado) y celdas vacías (NA, menores de 3 años).
+# Estrategia sugerida: Eliminación (Listwise)
+# ------------------------------------------------------------------------------
+
+# PASO 1.1: Diagnóstico
+# Vemos cuántos NAs reales hay y cuántos "99" existen.
+diagnostico_lengua <- enaho_seleccion %>%
+  count(lengua_materna, is.na(lengua_materna)) %>%
+  arrange(desc(n))
+print(diagnostico_lengua)
+
+# PASO 1.2: Tratamiento (Conversión y Eliminación Listwise)
+# Primero, estandarizamos todo: convertimos los 99 a verdaderos NA.
+# Luego, como es MCAR/Estructural, aplicamos la estrategia de Eliminación usando drop_na().
+enaho_tratada <- enaho_seleccion %>%
+  mutate(lengua_materna = na_if(lengua_materna, 99)) %>%
+  # Eliminación Listwise: Botamos de la base a los que no tienen lengua materna
+  # (Esto eliminará automáticamente a los menores de 3 años, lo cual es correcto 
+  # si nuestro proyecto de informalidad laboral solo analiza adultos).
+  drop_na(lengua_materna)
+
+# ------------------------------------------------------------------------------
+# CASO 2: MAR (Missing At Random)
+# Variable: confianza_congreso
+# Problema: No hay 9s, pero hay celdas vacías (NA) que pueden depender de otras variables (ej.: educacion).
+# Estrategia sugerida: Imputación Simple (Mediana / Moda) - tener cuidado!
+# ------------------------------------------------------------------------------
+
+# PASO 2.1: Diagnóstico
+# Como mencionaste que no hay nueves, solo verificamos cuántos NAs puros tenemos.
+diagnostico_confianza <- enaho_tratada %>%
+  summarise(
+    total_nas = sum(is.na(confianza_congreso)),
+    porcentaje = mean(is.na(confianza_congreso)) * 100
+  )
+print(diagnostico_confianza)
+
+# PASO 2.2: Tratamiento (Imputación Simple)
+# Dado que es una variable categórica/ordinal (Likert de confianza), la media 
+# no tiene sentido. La diapositiva permite usar la Mediana o la Moda. 
+# Usaremos la Mediana (el valor central de confianza).
+mediana_confianza <- median(enaho_tratada$confianza_congreso, na.rm = TRUE)
+
+enaho_tratada <- enaho_tratada %>%
+  mutate(
+    # replace_na busca los vacíos y los rellena con el valor que le indiquemos
+    confianza_congreso = replace_na(confianza_congreso, mediana_confianza)
+  )
