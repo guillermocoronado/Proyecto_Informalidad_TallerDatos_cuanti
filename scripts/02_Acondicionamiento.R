@@ -349,7 +349,7 @@ modelo_mice <- mice(
   m = 5, 
   maxit = 5, 
   method = "pmm", 
-  printFlag = TRUE # Muestra el progreso en consola para que los alumnos lo vean
+  printFlag = TRUE 
 )
 
 #Diagnóstico del modelo
