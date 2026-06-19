@@ -6,6 +6,8 @@
 # Objetivo: Análisis de Datos Exploratorio (EDA) de la base de datos procesda
 # ==============================================================================
 
+rm(list = ls())
+
 # ------------------------------------------------------------------------------
 # 0. CONFIGURACIÓN Y CARGA DE DATOS---------------------------------------------
 # ------------------------------------------------------------------------------
@@ -21,20 +23,33 @@ renv::snapshot()
 # Cargamos la base de datos limpia
 enaho_limpia <- read_parquet("datos/procesados/enaho_2025_19_06_25.parquet")
 
+table(enaho_limpia$categoria_ocupacional, enaho_limpia$tipo_contrato)
+table(enaho_limpia$categoria_ocupacional)
+
 # ------------------------------------------------------------------------------
 # 1. PREPARACIÓN DE VARIABLES ANALÍTICAS----------------------------------------
 # ------------------------------------------------------------------------------
 enaho_explorar <- enaho_limpia %>%
   mutate(
     # A. Matriz de Informalidad (Sector y Empleo)
-    sector_laboral = case_when(
+    formalidad_sector = case_when(
       tiene_ruc %in% c(1, 2) ~ "Sector Formal",
       tiene_ruc == 3 ~ "Sector Informal",
       TRUE ~ NA_character_
     ),
-    empleo_laboral = case_when(
-      tipo_contrato %in% c(1, 2, 3, 4, 5, 6, 8) ~ "Empleo Formal",
-      tipo_contrato == 7 ~ "Empleo Informal",
+    formalidad_empleo = case_when(
+      # 1. Trabajador familiar no remunerado (Siempre informal por definición)
+      categoria_ocupacional == 5 ~ "Empleo Informal",
+      
+      # 2. Independientes y Empleadores (Su empleo es formal solo si su unidad productiva tiene RUC o RUS)
+      categoria_ocupacional %in% c(1, 2) & tiene_ruc == 3 ~ "Empleo Informal",
+      categoria_ocupacional %in% c(1, 2) & tiene_ruc %in% c(1, 2) ~ "Empleo Formal",
+      
+      # 3. Dependientes: Empleados, Obreros, Trabajadoras del hogar, Otros (Dependen del contrato)
+      categoria_ocupacional %in% c(3, 4, 6, 7) & tipo_contrato == 7 ~ "Empleo Informal",
+      categoria_ocupacional %in% c(3, 4, 6, 7) & tipo_contrato %in% c(1, 2, 3, 4, 5, 6, 8) ~ "Empleo Formal",
+      
+      # Si hay NAs en las preguntas filtro y no entra en las categorías previas
       TRUE ~ NA_character_
     ),
     
@@ -70,15 +85,18 @@ enaho_explorar <- enaho_limpia %>%
   ) %>%
   
   # D. Índice de Confianza Institucional (Normalizado 0-1)
+  # 1. Convertimos los 5 (No sabe) y 9 (Missing value) a verdaderos NAs
   mutate(across(starts_with("confianza_"), ~na_if(., 5))) %>%
   mutate(across(starts_with("confianza_"), ~na_if(., 9))) %>%
-  mutate(across(starts_with("confianza_"), ~ 5 - .)) %>%
+  
+  # 2. Calculamos el promedio de confianza del individuo 
   rowwise() %>%
   mutate(promedio_confianza = mean(c_across(starts_with("confianza_")), na.rm = TRUE)) %>%
   ungroup() %>%
+  
+  # 3. Normalizamos al rango [0, 1]
+  # Fórmula: (Valor - Mínimo) / (Máximo - Mínimo) -> (x - 1) / (4 - 1)
   mutate(indice_confianza = (promedio_confianza - 1) / (4 - 1))
-
-view(enaho_explorar)
 
 # ------------------------------------------------------------------------------
 # 2. DISEÑO MUESTRAL: EL FACTOR DE EXPANSIÓN
@@ -92,22 +110,6 @@ enaho_diseno <- enaho_explorar %>%
     nest = TRUE              
   ) #Error que no detectanmos en acondicionamiento!
 
-enaho_diseno <- enaho_explorar %>%
-  mutate(
-    # 1. Cambiamos comas por puntos por si el INEI lo exportó así, y luego a numérico
-    factorA07 = as.numeric(str_replace_all(factorA07, ",", ".")),
-    conglome  = as.numeric(conglome),
-    estrato   = as.numeric(estrato)
-  ) %>%
-  # 2. Eliminamos obligatoriamente a quienes no tienen factor de expansión
-  filter(!is.na(factorA07)) %>%
-  # 3. Ahora sí, declaramos el diseño muestral
-  as_survey_design(
-    ids = conglome,          
-    strata = estrato,        
-    weights = factorA07,     
-    nest = TRUE              
-  )
 
 # ==============================================================================
 # 3. EXPLORACIÓN UNIVARIADA
