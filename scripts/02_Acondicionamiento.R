@@ -173,13 +173,15 @@ reporte_nas <- enaho_seleccion %>%
 
 write_csv(reporte_nas, "outputs/Reporte_Datos_Perdidos_ENAHO.csv")
 
-table(enaho_seleccion$confianza_congreso, useNA = "ifany")
-sum(is.na(enaho_seleccion$ingreso_prin))
-sum(enaho_seleccion$ingreso_prin == 999999, na.rm = TRUE)
-
 # ------------------------------------------------------------------------------
 # 4. TRATAMIENTO DE NAs---------------------------------------------------------
 # ------------------------------------------------------------------------------
+
+#Analizaremos tres casos
+table(enaho_seleccion$lengua_materna, useNA = "ifany") #Lengua Materna (MCAR)
+table(enaho_seleccion$confianza_congreso, useNA = "ifany") #Confianza en el Congreso (MAR)
+sum(is.na(enaho_seleccion$ingreso_prin)) #Ingreso proveniente de la ocupación principal (MNAR)
+sum(enaho_seleccion$ingreso_prin == 999999, na.rm = TRUE)
 
 # ------------------------------------------------------------------------------
 # CASO 1: MCAR (Missing Completely At Random) / Ausencia Estructural
@@ -204,6 +206,8 @@ enaho_tratada <- enaho_seleccion %>%
   # (Esto eliminará automáticamente a los menores de 3 años, lo cual es correcto 
   # si nuestro proyecto de informalidad laboral solo analiza adultos).
   drop_na(lengua_materna)
+
+sum(is.na(enaho_tratada$lengua_materna)) #Debería salir 0
 
 # ------------------------------------------------------------------------------
 # CASO 2: Combinación de MCAR (Estructural) y MAR (Missing at Random)
@@ -306,7 +310,6 @@ sum(is.na(enaho_tratada_3$ingreso_prin))
 # ------------------------------------------------------------------------------
 
 #Preparamos el paquete "mice"
-install.packages("mice")
 library(mice)
 renv::snapshot()
 
