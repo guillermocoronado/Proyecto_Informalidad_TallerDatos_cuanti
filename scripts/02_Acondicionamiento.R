@@ -87,7 +87,7 @@ enaho_seleccion <- enaho_raw %>%
     # Ingresos  
     temporalidad_pago = P523,
     ingreso_prin   = P524A1, # Ingreso total ocupación principal
-    ingreso_prin_no_sabe = P524A1,
+    ingreso_prin_no_sabe = P524A2,
     ingreso_sec    = P538A1,  # Ingreso total ocupaciones secundarias
     ingreso_sec_no_sabe = P538A2,
     recibe_ingreso_utilidades = P5445A,
@@ -137,12 +137,8 @@ enaho_seleccion <- enaho_raw %>%
     confianza_comision_anticorrupcion = `P1$21`,
   )
 
+# Hacemos una inspección rápida
+dim(enaho_seleccion)        # ¿Cuántas filas y columnas tenemos tras los joins previos?
+names(enaho_seleccion)      # Verificamos si los nombres son legibles
+glimpse(enaho_seleccion)    # Revisión crítica de cómo R interpretó los tipos de datos
 
-
-
-
-# Inspección básica (Ejecutar en consola)
-dim(enaho_raw)        # ¿Cuántas filas y columnas tenemos tras los joins previos?
-names(enaho_raw)      # Verificamos los nombres originales (incluyendo los P1$...)
-glimpse(enaho_raw)    # Revisión crítica de cómo R interpretó los tipos de datos
-summary(enaho_raw)    # Detección preliminar de valores atípicos
