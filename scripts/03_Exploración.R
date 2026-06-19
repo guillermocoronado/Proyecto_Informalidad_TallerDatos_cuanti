@@ -99,7 +99,7 @@ enaho_explorar <- enaho_limpia %>%
   mutate(indice_confianza = (promedio_confianza - 1) / (4 - 1))
 
 # ------------------------------------------------------------------------------
-# 2. DISEÑO MUESTRAL: EL FACTOR DE EXPANSIÓN
+# 2. DISEÑO MUESTRAL: EL FACTOR DE EXPANSIÓN------------------------------------
 # ------------------------------------------------------------------------------
 # Le decimos a R que use el factorA07 (Factor Anual de Empleo ajustado)
 enaho_diseno <- enaho_explorar %>%
@@ -135,7 +135,7 @@ enaho_diseno <- enaho_explorar %>%
 # ==============================================================================
 
 # ------------------------------------------------------------------------------
-# 3.1 Tabla Expandida (Frecuencias Absolutas Poblacionales) con Flextable
+# 3.1 Tabla Expandida (Frecuencias Absolutas Poblacionales) con Flextable-------
 # ------------------------------------------------------------------------------
 tabla_expandida_datos <- enaho_diseno %>%
   filter(!is.na(formalidad_empleo)) %>%
@@ -165,7 +165,7 @@ tabla_uni_word <- flextable(tabla_expandida_datos) %>%
 tabla_uni_word
 
 # ------------------------------------------------------------------------------
-# 3.2 Histograma: Ingreso Principal (Ponderado)
+# 3.2 Histograma: Ingreso Principal (Ponderado)---------------------------------
 # ------------------------------------------------------------------------------
 
 enaho_explorar <- enaho_explorar %>%
@@ -189,11 +189,11 @@ grafico_hist <- ggplot(enaho_explorar, aes(x = ingreso_prin_imputado, weight = f
 print(grafico_hist)
 
 # ==============================================================================
-# 4. EXPLORAR BIVARIADA: RELACIONES Y ESTRUCTURA
+# 4. EXPLORAR BIVARIADA: RELACIONES Y ESTRUCTURA--------------------------------
 # ==============================================================================
 
 # ------------------------------------------------------------------------------
-# 4.1 Categórica vs Categórica: Sector Informal vs. Empleo Informal
+# 4.1 Categórica vs Categórica: Sector Informal vs. Empleo Informal-------------
 # ------------------------------------------------------------------------------
 #Calculamos N poblacional y % por fila usando srvyr
 tabla_trabajo_negro_datos <- enaho_diseno %>%
@@ -250,7 +250,7 @@ grafico_negro <- ggplot(enaho_explorar %>% filter(!is.na(formalidad_sector) & !i
 print(grafico_negro)
 
 # ------------------------------------------------------------------------------
-# 4.2 Tabla Bivariada Múltiple: Perfil de Vulnerabilidad (Categórica vs. Categórica)
+# 4.2 Tabla Bivariada Múltiple: Perfil de Vulnerabilidad (Categórica vs. Categórica)------------
 # ------------------------------------------------------------------------------
 datos_largos <- enaho_explorar %>%
   filter(!is.na(formalidad_empleo)) %>%
@@ -308,7 +308,7 @@ tabla_perfil_word <- flextable(tabla_perfil_datos) %>%
 tabla_perfil_word
 
 # ------------------------------------------------------------------------------
-# 4.3 Continua vs Categórica: Brecha salarial por Sexo según Condición de Formalidad (Boxplot)
+# 4.3 Continua vs Categórica: Brecha salarial por Sexo según Condición de Formalidad (Boxplot)---------
 # ------------------------------------------------------------------------------
 install.packages("quantreg") #Lo necesitamos para poder hacer un boxplot usando el factor de expansión
 renv::snapshot()
@@ -346,7 +346,7 @@ print(grafico_brecha_sexo)
 
 
 # ------------------------------------------------------------------------------
-# 4.5 Continua vs Categórica: Índice de Confianza vs Empleo (Boxplot)
+# 4.5 Continua vs Categórica: Índice de Confianza vs Empleo (Boxplot)-----------
 # ------------------------------------------------------------------------------
 grafico_confianza <- ggplot(enaho_explorar %>% filter(!is.na(formalidad_empleo)), 
                             aes(x = formalidad_empleo, y = indice_confianza, fill = formalidad_empleo, weight = factorA07)) +
