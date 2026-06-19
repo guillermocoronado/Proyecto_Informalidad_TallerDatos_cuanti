@@ -7,7 +7,7 @@
 # ==============================================================================
 
 # ------------------------------------------------------------------------------
-# 0. CONFIGURACIÓN Y CARGA DE DATOS
+# 0. CONFIGURACIÓN Y CARGA DE DATOS---------------------------------------------
 # ------------------------------------------------------------------------------
 library(tidyverse)
 library(arrow)
@@ -16,16 +16,17 @@ library(srvyr)       # Para usar dplyr con encuestas complejas
 library(gtsummary)   # Para tablas descriptivas con calidad de publicación
 library(flextable)   # Para exportar tablas a Word
 library(scales)      # Para formato de números (comas, porcentajes)
+renv::snapshot()
 
 # Cargamos la base de datos limpia
-enaho_limpia <- read_parquet("datos/procesados/enaho_2025_19_06_26.parquet")
+enaho_limpia <- read_parquet("datos/procesados/enaho_2025_19_06_25.parquet")
 
 # ------------------------------------------------------------------------------
-# 1. PREPARACIÓN DE VARIABLES ANALÍTICAS
+# 1. PREPARACIÓN DE VARIABLES ANALÍTICAS----------------------------------------
 # ------------------------------------------------------------------------------
 enaho_explorar <- enaho_limpia %>%
   mutate(
-    # A. Matriz de Informalidad OIT (Sector y Empleo)
+    # A. Matriz de Informalidad (Sector y Empleo)
     sector_laboral = case_when(
       tiene_ruc %in% c(1, 2) ~ "Sector Formal",
       tiene_ruc == 3 ~ "Sector Informal",
@@ -77,11 +78,30 @@ enaho_explorar <- enaho_limpia %>%
   ungroup() %>%
   mutate(indice_confianza = (promedio_confianza - 1) / (4 - 1))
 
+view(enaho_explorar)
+
 # ------------------------------------------------------------------------------
 # 2. DISEÑO MUESTRAL: EL FACTOR DE EXPANSIÓN
 # ------------------------------------------------------------------------------
 # Le decimos a R que use el factorA07 (Factor Anual de Empleo ajustado)
 enaho_diseno <- enaho_explorar %>%
+  as_survey_design(
+    ids = conglome,          
+    strata = estrato,        
+    weights = factorA07,     
+    nest = TRUE              
+  ) #Error que no detectanmos en acondicionamiento!
+
+enaho_diseno <- enaho_explorar %>%
+  mutate(
+    # 1. Cambiamos comas por puntos por si el INEI lo exportó así, y luego a numérico
+    factorA07 = as.numeric(str_replace_all(factorA07, ",", ".")),
+    conglome  = as.numeric(conglome),
+    estrato   = as.numeric(estrato)
+  ) %>%
+  # 2. Eliminamos obligatoriamente a quienes no tienen factor de expansión
+  filter(!is.na(factorA07)) %>%
+  # 3. Ahora sí, declaramos el diseño muestral
   as_survey_design(
     ids = conglome,          
     strata = estrato,        
