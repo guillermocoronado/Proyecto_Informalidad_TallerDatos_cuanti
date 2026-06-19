@@ -8,7 +8,7 @@
 # ==============================================================================
 
 # ------------------------------------------------------------------------------
-# 0. CONFIGURACIÓN DEL ENTORNO
+# 0. CONFIGURACIÓN DEL ENTORNO--------------------------------------------------
 # ------------------------------------------------------------------------------
 library(tidyverse)
 library(arrow)
@@ -17,7 +17,7 @@ library(naniar)
 renv::snapshot()
 
 # ------------------------------------------------------------------------------
-# 1. CARGA, SELECCIÓN, RENOMBRADO Y DIAGNÓSTICO 
+# 1. CARGA, SELECCIÓN, RENOMBRADO Y DIAGNÓSTICO---------------------------------
 # ------------------------------------------------------------------------------
 # Leemos la base que consolidamos la clase pasada en formato parquet. 
 enaho_raw <- read_parquet("datos/procesados/enaho_2025_120626.parquet")
@@ -143,7 +143,7 @@ names(enaho_seleccion)      # Verificamos si los nombres son legibles
 glimpse(enaho_seleccion)    # Revisión crítica de cómo R interpretó los tipos de datos
 
 # ------------------------------------------------------------------------------
-# 3. EL TRATAMIENTO DE VALORES PERDIDOS (NAs)
+# 3. TRATAMIENTO DE VALORES PERDIDOS (NAs)--------------------------------------
 # ------------------------------------------------------------------------------
 
 enaho_acondicionada <- enaho_seleccion %>%
