@@ -308,45 +308,41 @@ tabla_perfil_word <- flextable(tabla_perfil_datos) %>%
 tabla_perfil_word
 
 # ------------------------------------------------------------------------------
-# 4.3 Continua vs Categórica: Brecha salarial por Sexo (Boxplot)
+# 4.3 Continua vs Categórica: Brecha salarial por Sexo según Condición de Formalidad (Boxplot)
 # ------------------------------------------------------------------------------
-grafico_brecha_sexo <- ggplot(enaho_explorar %>% filter(!is.na(sexo)), 
-                              aes(x = sexo, y = ingreso_prin_imputado, fill = sexo, weight = factorA07)) +
+install.packages("quantreg") #Lo necesitamos para poder hacer un boxplot usando el factor de expansión
+
+datos_boxplot <- enaho_explorar %>% 
+  filter(
+    !is.na(sexo),
+    !is.na(formalidad_empleo),
+    !is.na(ingreso_prin_imputado),
+    !is.na(factorA07)
+  )
+
+grafico_brecha_sexo <- ggplot(datos_boxplot, 
+                              aes(x = formalidad_empleo, 
+                                  y = as.numeric(ingreso_prin_imputado), 
+                                  fill = sexo, 
+                                  weight = factorA07)) +
+  
   geom_boxplot(alpha = 0.7, outlier.color = "red", outlier.size = 1, outlier.alpha = 0.3) +
-  scale_y_continuous(labels = scales::comma, limits = c(0, 10000)) + 
+  coord_cartesian(ylim = c(0, 10000)) + 
+  scale_y_continuous(labels = scales::comma) + 
   labs(
-    title = "Gráfico 3. Distribución del ingreso principal según sexo",
-    subtitle = "PEA Ocupada (18 a más años), Perú 2025",
-    x = "Sexo del trabajador",
-    y = "Ingreso mensual principal (Soles corrientes)",
-    caption = "Fuente: ENAHO 2025.\nNota: Eje Y truncado a S/10,000."
+    title = "Gráfico 3. Perú: Brecha salarial por sexo según condición de formalidad del empleo",
+    subtitle = "PEA Ocupada (18 a más años)",
+    x = "Condición de formalidad del empleo",
+    y = "Ingreso mensual proveniente de la ocupación principal (Soles corrientes)",
+    fill = "Sexo del trabajador:",
+    caption = "Fuente: ENAHO 2025.\nNota: Eje Y truncado visualmente a S/10,000. Cajas ponderadas por factor de expansión."
   ) +
   theme_minimal() +
   scale_fill_manual(values = c("#2E5B88", "#E69F00")) + 
-  theme(legend.position = "none")
+  theme(legend.position = "bottom")
 
 print(grafico_brecha_sexo)
 
-# ------------------------------------------------------------------------------
-# 4.4 Categórica vs Categórica: Desprotección en la Vejez (Barras apiladas)
-# ------------------------------------------------------------------------------
-grafico_pensiones <- ggplot(enaho_explorar %>% filter(!is.na(empleo_laboral) & !is.na(afiliacion_pensiones)), 
-                            aes(x = empleo_laboral, fill = afiliacion_pensiones, weight = factorA07)) +
-  geom_bar(position = "fill", alpha = 0.8) +
-  scale_y_continuous(labels = scales::percent) +
-  labs(
-    title = "Gráfico 4. Afiliación a sistema de pensiones según condición de empleo",
-    subtitle = "PEA Ocupada (18 a más años), Perú 2025",
-    x = "Condición de empleo laboral",
-    y = "Proporción de trabajadores (%)",
-    fill = "Sistema de Pensiones:",
-    caption = "Fuente: ENAHO 2025.\nNota: Ponderado por factorA07."
-  ) +
-  theme_minimal() +
-  scale_fill_brewer(palette = "Dark2") +
-  theme(legend.position = "bottom")
-
-print(grafico_pensiones)
 
 # ------------------------------------------------------------------------------
 # 4.5 Continua vs Categórica: Índice de Confianza vs Empleo (Boxplot)
