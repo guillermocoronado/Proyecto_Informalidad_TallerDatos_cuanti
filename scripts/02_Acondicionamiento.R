@@ -143,10 +143,10 @@ names(enaho_seleccion)      # Verificamos si los nombres son legibles
 glimpse(enaho_seleccion)    # Revisión crítica de cómo R interpretó los tipos de datos
 
 # ------------------------------------------------------------------------------
-# 3. DIAGNÓSTICO DE NAs Y REPORTE-----------------------------------------------
+# 2. DIAGNÓSTICO DE NAs Y REPORTE-----------------------------------------------
 # ------------------------------------------------------------------------------
 
-# 3.1 Visualización Gráfica (naniar)
+# 2.1 Visualización Gráfica (naniar)
 
 # Creamos un gráfico de barras que muestra la cantidad de NAs por variable
 grafico_nas <- gg_miss_var(enaho_seleccion, show_pct = TRUE) +
@@ -165,7 +165,7 @@ print(grafico_nas)
 ggsave("outputs/Grafico_NAs_Informalidad.png", plot = grafico_nas, 
        width = 8, height = 6, bg = "white")
 
-# 3.2 Reporte Tabular 
+# 2.2 Reporte Tabular 
 reporte_nas <- enaho_seleccion %>%
   summarise(across(everything(), ~ round(sum(is.na(.)) / n() * 100, 2))) %>%
   pivot_longer(everything(), names_to = "variable", values_to = "porcentaje_na") %>%
@@ -174,7 +174,7 @@ reporte_nas <- enaho_seleccion %>%
 write_csv(reporte_nas, "outputs/Reporte_Datos_Perdidos_ENAHO.csv")
 
 # ------------------------------------------------------------------------------
-# 4. TRATAMIENTO DE NAs---------------------------------------------------------
+# 3. TRATAMIENTO DE NAs---------------------------------------------------------
 # ------------------------------------------------------------------------------
 
 #Analizaremos tres casos
@@ -261,7 +261,7 @@ sum(is.na(enaho_tratada_2$confianza_congreso)) # Debería arrojar 0
 # ------------------------------------------------------------------------------
 
 # PASO 3.1: Diagnóstico cruzado con la Condición de Ocupación
-diagnostico_ingreso <- enaho_tratada %>%
+diagnostico_ingreso <- enaho_tratada_2 %>%
   # Creamos temporalmente la variable "condicion_ocupacion"
   mutate(
     condicion_ocupacion = ifelse(
@@ -280,7 +280,7 @@ diagnostico_ingreso <- enaho_tratada %>%
 print(diagnostico_ingreso)
 
 # PASO 3.2: Tratamiento en dos fases
-enaho_tratada_3 <- enaho_tratada %>%
+enaho_tratada_3 <- enaho_tratada_2 %>%
   
   # FASE A: Eliminación Estructural (Filtro de Ocupados)
   # Nos quedamos estrictamente con el universo de nuestro proyecto: La PEA Ocupada.
@@ -322,7 +322,7 @@ renv::snapshot()
 # Extraemos solo la variable a imputar y las variables que teóricamente 
 # explican el ingreso (predictores sociodemográficos y laborales).
 
-enaho_tratada_4 <- enaho_tratada %>%
+enaho_tratada_4 <- enaho_tratada_2 %>%
   filter(trabajo_semana_pasada == 1 | empleo_fijo_volvera == 1 | negocio_volvera == 1)
 
 datos_para_imputar <- enaho_tratada_4 %>%
@@ -374,3 +374,15 @@ sum(is.na(base_imputada_final$ingreso_prin)) # Resultado: 0
 # (Opcional) Podemos devolver esta columna imputada a nuestra base maestra
 enaho_tratada_final <- enaho_tratada_4 %>%
   mutate(ingreso_prin_imputado = base_imputada_final$ingreso_prin)
+
+
+# ------------------------------------------------------------------------------
+# 4. EXPORTANOS NUESTRA BASE DE DATOS-------------------------------------------
+# ------------------------------------------------------------------------------
+
+write_parquet(enaho_tratada_final, "datos/procesados/enaho_2025_19_06_25.parquet")
+#OJO: TENEMOS QUE TENER EN CUENTA QUE ESTA BASE DE DATOS:
+# - SOLO INCLUYE MAYORES DE 18
+# - SOLO INCLUYE PEA OCUPADA
+# - SOLO INCLUYE PERSONA QUE MENCIONÓ SU LENGUA MATERNA
+
