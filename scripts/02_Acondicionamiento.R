@@ -307,4 +307,5 @@ sum(is.na(enaho_tratada_3$ingreso_prin))
 
 #Preparamos el paquete "mice"
 install.packages("mice")
-
+library(mice)
+renv::snapshot()
