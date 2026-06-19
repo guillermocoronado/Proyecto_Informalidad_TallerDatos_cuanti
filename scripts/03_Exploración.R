@@ -110,6 +110,25 @@ enaho_diseno <- enaho_explorar %>%
     nest = TRUE              
   ) #Error que no detectanmos en acondicionamiento!
 
+enaho_diseno <- enaho_explorar %>%
+  mutate(
+    #Reemplazamos la coma por el punto decimal y forzamos a numérico
+    factorA07 = as.numeric(str_replace_all(factorA07, ",", ".")),
+    
+    # Aseguramos que las llaves de diseño también sean números
+    conglome  = as.numeric(conglome),
+    estrato   = as.numeric(estrato)
+  ) %>%
+  #El paquete survey no admite valores perdidos en los factores de expansión
+  filter(!is.na(factorA07)) %>%
+  
+  #Declaramos el diseño muestral complejo
+  as_survey_design(
+    ids = conglome,          
+    strata = estrato,        
+    weights = factorA07,     
+    nest = TRUE              
+  )
 
 # ==============================================================================
 # 3. EXPLORACIÓN UNIVARIADA
@@ -119,8 +138,8 @@ enaho_diseno <- enaho_explorar %>%
 # 3.1 Tabla Expandida (Frecuencias Absolutas Poblacionales) con Flextable
 # ------------------------------------------------------------------------------
 tabla_expandida_datos <- enaho_diseno %>%
-  filter(!is.na(empleo_laboral)) %>%
-  group_by(empleo_laboral) %>%
+  filter(!is.na(formalidad_empleo)) %>%
+  group_by(formalidad_empleo) %>%
   summarise(
     Poblacion = survey_total(vartype = NULL), 
     Porcentaje = survey_mean(vartype = NULL) * 100
@@ -130,31 +149,40 @@ tabla_expandida_datos <- enaho_diseno %>%
     Porcentaje = paste0(round(Porcentaje, 1), "%")
   ) %>%
   rename(
-    `Condición de Empleo` = empleo_laboral,
+    `Condición de Empleo` = formalidad_empleo,
     `Total Expandido (N)` = Poblacion,
     `Proporción (%)` = Porcentaje
   )
 
 tabla_uni_word <- flextable(tabla_expandida_datos) %>%
-  add_header_lines(values = "Tabla 1. Población ocupada según condición de empleo") %>%
-  add_footer_lines(values = "Fuente: ENAHO 2025. Cálculos usando el factor de expansión anual (factorA07).") %>%
-  autofit() %>% theme_vanilla() %>% align(align = "center", part = "all") %>% bold(part = "header")
+  add_header_lines(values = "Tabla 1. Perú: Población ocupada según condición de formalidad, 2025") %>%
+  add_footer_lines(values = "Fuente: ENAHO 2025. Cálculos usando el factor de expansión anual.") %>%
+  autofit() %>% theme_vanilla() %>% align(align = "center", part = "all") %>% bold(part = "header") %>% 
+  align(align = "left", part = "footer") %>%                     
+  fontsize(size = 9, part = "footer") %>%                        
+  hline_bottom(part = "footer", border = officer::fp_border(width = 0))
 
 tabla_uni_word
 
 # ------------------------------------------------------------------------------
 # 3.2 Histograma: Ingreso Principal (Ponderado)
 # ------------------------------------------------------------------------------
+
+enaho_explorar <- enaho_explorar %>%
+  mutate(
+    factorA07 = as.numeric(str_replace_all(factorA07, ",", "."))
+  ) #Corregimos el formato del factor de expansión en nuestra base de datos principal
+
 grafico_hist <- ggplot(enaho_explorar, aes(x = ingreso_prin_imputado, weight = factorA07)) +
   geom_histogram(fill = "#8C92AC", color = "white", bins = 50) +
   scale_x_continuous(labels = scales::comma, limits = c(0, 10000)) + 
   scale_y_continuous(labels = scales::comma) +
   labs(
-    title = "Gráfico 1. Distribución poblacional del ingreso mensual (PEA ocupada)",
+    title = "Gráfico 1. Distribución del ingreso proveniente de la ocupación principal entre la PEA ocupada",
     subtitle = "Perú, 2025",
     x = "Ingreso principal (Soles corrientes)",
     y = "Número de personas (Expandido)",
-    caption = "Fuente: ENAHO 2025.\nNota: Eje X truncado en S/10,000. Gráfico ajustado por factorA07."
+    caption = "Fuente: ENAHO 2025.\nNota: Eje X truncado en S/10,000. Gráfico ajustado por factor de expansión."
   ) +
   theme_minimal()
 
@@ -165,7 +193,7 @@ print(grafico_hist)
 # ==============================================================================
 
 # ------------------------------------------------------------------------------
-# 4.1 Categórica vs Categórica: El "Trabajo en Negro" (gtsummary ponderado)
+# 4.1 Categórica vs Categórica: Sector Informal vs. Empleo Informal
 # ------------------------------------------------------------------------------
 # Usamos tbl_svysummary para que gtsummary lea el factor de expansión
 tabla_trabajo_negro <- enaho_diseno %>%
