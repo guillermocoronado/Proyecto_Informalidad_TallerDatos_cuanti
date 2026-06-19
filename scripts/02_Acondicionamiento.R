@@ -142,29 +142,3 @@ dim(enaho_seleccion)        # ¿Cuántas filas y columnas tenemos tras los joins
 names(enaho_seleccion)      # Verificamos si los nombres son legibles
 glimpse(enaho_seleccion)    # Revisión crítica de cómo R interpretó los tipos de datos
 
-# ------------------------------------------------------------------------------
-# 3. TRATAMIENTO DE VALORES PERDIDOS (NAs)--------------------------------------
-# ------------------------------------------------------------------------------
-
-enaho_acondicionada <- enaho_seleccion %>%
-  # DECISIÓN 1: Confianza Institucional (MNAR/MAR)
-  # Los códigos 8 (No sabe) y 9 (No responde) se pasan a NA.
-  mutate(
-    across(starts_with("p1_"), ~na_if(., 8)),
-    across(starts_with("p1_"), ~na_if(., 9))
-  ) %>%
-  
-  # DECISIÓN 2: Ingresos Laborales (MNAR)
-  # El código 999999 es de sistema. Es crítico pasarlo a NA antes de promediar.
-  mutate(
-    ingreso_prin = ifelse(ingreso_prin == 999999, NA, ingreso_prin),
-    ingreso_sec  = ifelse(ingreso_sec == 999999, NA, ingreso_sec)
-  ) %>%
-  
-  # DECISIÓN 3: Filtros de Informalidad (MCAR Estructural)
-  # El código 9 ("No sabe/No aplica") en RUC y Contrato se pasa a NA.
-  # Si alguien no trabaja, el salto del cuestionario lo deja vacío lógicamente.
-  mutate(
-    tiene_ruc     = na_if(tiene_ruc, 9),
-    tipo_contrato = na_if(tipo_contrato, 9)
-  )
