@@ -23,9 +23,6 @@ renv::snapshot()
 # Cargamos la base de datos limpia
 enaho_limpia <- read_parquet("datos/procesados/enaho_2025_19_06_25.parquet")
 
-table(enaho_limpia$categoria_ocupacional, enaho_limpia$tipo_contrato)
-table(enaho_limpia$categoria_ocupacional)
-
 # ------------------------------------------------------------------------------
 # 1. PREPARACIÓN DE VARIABLES ANALÍTICAS----------------------------------------
 # ------------------------------------------------------------------------------
@@ -81,7 +78,12 @@ enaho_explorar <- enaho_limpia %>%
       afiliado_SNP_19990 == 2 | afiliado_SNP_20530 == 3 | afiliado_SNP_otro == 4 ~ "ONP/Otros (Público)",
       no_afiliado_pensiones == 5 ~ "No afiliado a pensiones",
       TRUE ~ NA_character_
-    )
+    ),
+    # Limpieza previa de formatos numéricos
+    factorA07 = as.numeric(str_replace_all(factorA07, ",", ".")),
+    conglome  = as.numeric(conglome),
+    estrato   = as.numeric(estrato),
+    ingreso_prin_imputado = as.numeric(ingreso_prin_imputado)
   ) %>%
   
   # D. Índice de Confianza Institucional (Normalizado 0-1)
@@ -96,8 +98,8 @@ enaho_explorar <- enaho_limpia %>%
   
   # 3. Normalizamos al rango [0, 1]
   # Fórmula: (Valor - Mínimo) / (Máximo - Mínimo) -> (x - 1) / (4 - 1)
-  mutate(indice_confianza = (promedio_confianza - 1) / (4 - 1))
-
+  mutate(indice_confianza = (promedio_confianza - 1) / (4 - 1)) 
+  
 # ------------------------------------------------------------------------------
 # 2. DISEÑO MUESTRAL: EL FACTOR DE EXPANSIÓN------------------------------------
 # ------------------------------------------------------------------------------
@@ -108,20 +110,9 @@ enaho_diseno <- enaho_explorar %>%
     strata = estrato,        
     weights = factorA07,     
     nest = TRUE              
-  ) #Error que no detectanmos en acondicionamiento!
-
-enaho_diseno <- enaho_explorar %>%
-  mutate(
-    #Reemplazamos la coma por el punto decimal y forzamos a numérico
-    factorA07 = as.numeric(str_replace_all(factorA07, ",", ".")),
-    
-    # Aseguramos que las llaves de diseño también sean números
-    conglome  = as.numeric(conglome),
-    estrato   = as.numeric(estrato)
-  ) %>%
-  #El paquete survey no admite valores perdidos en los factores de expansión
+  ) %>% 
+  #El paquete no admite NAs en el factor de expansión
   filter(!is.na(factorA07)) %>%
-  
   #Declaramos el diseño muestral complejo
   as_survey_design(
     ids = conglome,          
@@ -188,6 +179,48 @@ grafico_hist <- ggplot(enaho_explorar, aes(x = ingreso_prin_imputado, weight = f
 
 print(grafico_hist)
 
+# ------------------------------------------------------------------------------
+# 3.3 Tabla de Estadísticos de Resumen: Ingreso Principal (Ponderado)
+# ------------------------------------------------------------------------------
+# 1. Calculamos los estadísticos usando el diseño muestral
+estadisticos_ingreso <- enaho_diseno %>%
+  filter(!is.na(ingreso_prin_imputado)) %>%
+  summarise(
+    `Mínimo` = min(ingreso_prin_imputado, na.rm = TRUE),
+    `Percetil 25 (Q1)` = survey_quantile(ingreso_prin_imputado, 0.25, vartype = NULL),
+    `Mediana (Q2)` = survey_median(ingreso_prin_imputado, vartype = NULL),
+    `Media (Promedio)` = survey_mean(ingreso_prin_imputado, vartype = NULL),
+    `Percentil 75 (Q3)` = survey_quantile(ingreso_prin_imputado, 0.75, vartype = NULL),
+    `Máximo` = max(ingreso_prin_imputado, na.rm = TRUE)
+  ) %>%
+  # 2. Pasamos la tabla a formato vertical para que se vea más elegante
+  pivot_longer(
+    cols = everything(), 
+    names_to = "Estadístico", 
+    values_to = "Valor"
+  ) %>%
+  # 3. Le damos formato de moneda/número (con comas y un decimal)
+  mutate(Valor = scales::comma(round(Valor, 1))) %>%
+  rename(`Valor (Soles corrientes)` = Valor)
+
+# 4. Renderizamos con el diseño estandarizado de Flextable
+tabla_stats_word <- flextable(estadisticos_ingreso) %>%
+  add_header_lines(values = "Tabla 2. Estadísticos de resumen del ingreso mensual proveniente de la ocupación principal") %>%
+  add_footer_lines(values = "Fuente: ENAHO 2025. | Cálculos ponderados usando el factor de expansión anual.") %>%
+  autofit() %>% 
+  theme_vanilla() %>% 
+  align(align = "center", part = "all") %>% 
+  align(j = 1, align = "left", part = "body") %>% # El nombre del estadístico a la izquierda
+  bold(part = "header") %>%
+  
+  # Ajustes de la nota al pie
+  align(align = "left", part = "footer") %>% 
+  fontsize(size = 9, part = "footer") %>% 
+  hline_bottom(part = "footer", border = officer::fp_border(width = 0))
+
+# Visualizar en el panel
+tabla_stats_word
+
 # ==============================================================================
 # 4. EXPLORAR BIVARIADA: RELACIONES Y ESTRUCTURA--------------------------------
 # ==============================================================================
@@ -216,7 +249,7 @@ tabla_trabajo_negro_datos <- enaho_diseno %>%
 
 # 2. Le damos el mismo diseño estético de la Tabla 1
 tabla_negro_word <- flextable(tabla_trabajo_negro_datos) %>%
-  add_header_lines(values = "Tabla 2. Perú: Condición de formalidad del empleo según formalidad del sector") %>%
+  add_header_lines(values = "Tabla 3. Perú: Condición de formalidad del empleo según formalidad del sector") %>%
   add_footer_lines(values = "Fuente: ENAHO 2025. Cálculos usando el factor de expansión anual.") %>%
   autofit() %>%                     
   theme_vanilla() %>%               
@@ -297,7 +330,7 @@ tabla_perfil_datos <- totales_general %>%
   arrange(Caracteristica)
 
 tabla_perfil_word <- flextable(tabla_perfil_datos) %>%
-  add_header_lines(values = "Tabla 3. Perú: Perfil sociodemográfico y de protección social según condición de formalidad en el empleo") %>%
+  add_header_lines(values = "Tabla 4. Perú: Perfil sociodemográfico y de protección social según condición de formalidad en el empleo") %>%
   add_footer_lines(values = "Fuente: ENAHO 2025. Cálculos usando el factor de expansión anual") %>%
   autofit() %>% theme_vanilla() %>% align(align = "center", part = "all") %>% 
   align(j = 1:2, align = "left", part = "body") %>% bold(part = "header") %>%
@@ -331,7 +364,7 @@ grafico_brecha_sexo <- ggplot(datos_boxplot,
   coord_cartesian(ylim = c(0, 10000)) + 
   scale_y_continuous(labels = scales::comma) + 
   labs(
-    title = "Gráfico 3. Perú: Brecha salarial por sexo según condición de formalidad del empleo",
+    title = "Gráfico 4. Perú: Brecha salarial por sexo según condición de formalidad del empleo",
     subtitle = "PEA Ocupada (18 a más años)",
     x = "Condición de formalidad del empleo",
     y = "Ingreso mensual proveniente de la ocupación principal (Soles corrientes)",
@@ -366,4 +399,19 @@ print(grafico_confianza)
 # ==============================================================================
 # 5. EXPORTACIÓN DE TABLAS Y GRÁFICOS
 # ==============================================================================
+save_as_docx(tabla_uni_word,    path = "outputs/Tabla1_Condicion_Formalidad.docx")
+save_as_docx(tabla_stats_word,  path = "outputs/Tabla2_Estadisticos_Ingreso.docx")
+save_as_docx(tabla_negro_word,  path = "outputs/Tabla3_Matriz_Sector_Empleo.docx")
+save_as_docx(tabla_perfil_word, path = "outputs/Tabla4_Perfil_Vulnerabilidad.docx")
 
+
+ggsave("outputs/Grafico1_Histograma_Ingresos.png", plot = grafico_hist,          width = 10, height = 6, dpi = 300, bg = "white")
+ggsave("outputs/Grafico2_Matriz_Sector_Empleo.png",plot = grafico_negro,         width = 10, height = 6, dpi = 300, bg = "white")
+ggsave("outputs/Grafico3_Brecha_Salarial_Sexo.png",plot = grafico_brecha_sexo,    width = 11, height = 6, dpi = 300, bg = "white")
+ggsave("outputs/Grafico4_Confianza_Institucional.png", plot = grafico_confianza, width = 10, height = 6, dpi = 300, bg = "white")
+
+# ==============================================================================
+# 6. EXPORTACIÓN DE LA BASE DE DATOS FINAL
+# ==============================================================================
+
+write_parquet(enaho_explorar, "datos/procesados/enaho_2025_20_06_26.parquet")
