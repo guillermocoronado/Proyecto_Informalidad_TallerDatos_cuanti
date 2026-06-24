@@ -93,7 +93,7 @@ formato_flextable <- function(tabla, titulo) {
 }
 
 # ------------------------------------------------------------------------------
-# 3.1 Tabla Cruda: Categoría Ocupacional----------------------------------------
+# 3.1 Categoría Ocupacional-----------------------------------------------------
 # ------------------------------------------------------------------------------
 tabla_ocupacion <- enaho_diseno %>%
   filter(!is.na(categoria_ocupacional_etiqueta)) %>%
@@ -102,7 +102,8 @@ tabla_ocupacion <- enaho_diseno %>%
   mutate(Poblacion = scales::comma(round(Poblacion, 0)), Porcentaje = paste0(round(Porcentaje, 1), "%")) %>%
   rename(`Categoría Ocupacional` = categoria_ocupacional_etiqueta, `Total (N)` = Poblacion, `%` = Porcentaje)
 
-ft_ocupacion <- formato_flextable(tabla_ocupacion, "Tabla 1. Perú: Distribución de la PEA ocupada según categoría ocupacional")
+ft_ocupacion <- formato_flextable(tabla_ocupacion, "Tabla 1. Perú: Distribución de la PEA ocupada según categoría ocupacional, 2025")
+print(ft_ocupacion)
 
 # ------------------------------------------------------------------------------
 # 3.2 Tabla Cruda: Condición de RUC
