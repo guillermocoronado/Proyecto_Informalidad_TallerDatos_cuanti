@@ -420,22 +420,45 @@ plot_ingreso_ruc_sexo <- ggplot(enaho_explorar %>% filter(!is.na(tiene_ruc_etiqu
   theme_minimal() + theme(legend.position = "bottom")
 print(plot_ingreso_ruc_sexo)
 
-# C. Confianza en el Congreso según Registro del Centro de Trabajo
-plot_confianza_ruc <- ggplot(enaho_explorar %>% filter(!is.na(tiene_ruc_etiqueta) & !is.na(confianza_congreso)), 
-                             aes(x = tiene_ruc_etiqueta, y = as.numeric(confianza_congreso), fill = tiene_ruc_etiqueta, weight = factorA07)) +
-  geom_boxplot(alpha = 0.6) +
-  labs(title = "Gráfico 6. Perú: Nivel de confianza en el Congreso según registro del centro de trabajo", x = "Tipo de Registro (RUC)", y = "Confianza (1 = Nada, 4 = Bastante)") +
-  theme_minimal() + theme(legend.position = "none")
+# C. Confianza en el Congreso según Registro del Centro de Trabajo (Barras Apiladas)
+plot_confianza_ruc <- ggplot(enaho_explorar %>% 
+                               filter(!is.na(tiene_ruc_etiqueta) & !is.na(confianza_congreso)) %>%
+                               mutate(confianza_congreso_cat = factor(confianza_congreso, 
+                                                                      levels = 1:4, 
+                                                                      labels = c("1. Nada", "2. Poco", "3. Suficiente", "4. Bastante"))), 
+                             aes(x = tiene_ruc_etiqueta, fill = confianza_congreso_cat, weight = factorA07)) +
+  geom_bar(position = "fill", alpha = 0.85) +
+  scale_y_continuous(labels = scales::percent) +
+  scale_fill_manual(values = c("1. Nada" = "#D73027", "2. Poco" = "#FC8D59", 
+                               "3. Suficiente" = "#91BFDB", "4. Bastante" = "#4575B4")) +
+  labs(title = "Gráfico 6. Perú: Nivel de confianza en el Congreso según registro del centro de trabajo", 
+       subtitle = "Proporción de la PEA ocupada, 2025",
+       x = "Tipo de Registro (RUC)", 
+       y = "Proporción de encuestados", 
+       fill = "Nivel de Confianza:",
+       caption = "Fuente: ENAHO 2025. Cálculos ajustados por factor de expansión.") +
+  theme_minimal() + 
+  theme(legend.position = "bottom")
+
 print(plot_confianza_ruc)
 
 # ------------------------------------------------------------------------------
-# 5.3 Continua vs. Continua (Gráfico de Dispersión / Scatter)
+# 5.3 Continua vs. Continua (Gráfico de Dispersión en Escala Logarítmica)
 # ------------------------------------------------------------------------------
-plot_edad_ingreso <- ggplot(enaho_explorar %>% filter(!is.na(edad) & !is.na(ingreso_prin_imputado)), 
+plot_edad_ingreso <- ggplot(enaho_explorar %>% 
+                              # Filtramos > 0 porque el logaritmo de 0 es indefinido
+                              filter(!is.na(edad) & ingreso_prin_imputado > 0), 
                             aes(x = edad, y = ingreso_prin_imputado)) +
-  geom_jitter(alpha = 0.1, color = "#4A7C59", width = 0.5, height = 0) +
-  geom_smooth(method = "gam", color = "red", se = FALSE) + 
-  coord_cartesian(ylim = c(0, 15000)) + scale_y_continuous(labels = scales::comma) +
-  labs(title = "Gráfico 7. Relación entre Edad e Ingreso Principal", subtitle = "Con línea de tendencia suavizada", x = "Edad (Años)", y = "Ingreso (Soles corrientes)") +
+  geom_jitter(alpha = 0.15, color = "#4A7C59", width = 0.5, height = 0) +
+  geom_smooth(method = "gam", color = "red", se = FALSE, linewidth = 1) + 
+  #Transformamos el eje Y a escala logarítmica (base 10)
+  scale_y_log10(labels = scales::comma) + 
+  
+  labs(title = "Gráfico 7. Perú: Relación entre Edad e Ingreso Proveniente de la Ocupación Principal entre la PEA Ocupada, 2025", 
+       subtitle = "Escala logarítmica (eje Y) con línea de tendencia suavizada", 
+       x = "Edad (Años)", 
+       y = "Ingreso (Soles corrientes, escala log10)",
+       caption = "Fuente: ENAHO 2025. Nota: Se excluyeron ingresos iguales a cero para la transformación.") +
   theme_minimal()
+
 print(plot_edad_ingreso)
