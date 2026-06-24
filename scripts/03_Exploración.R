@@ -53,7 +53,7 @@ enaho_explorar <- enaho_limpia %>%
     # B. Demográficas (Crudas)
     sexo_etiqueta = factor(sexo, levels = c(1, 2), labels = c("Hombre", "Mujer")),
     
-    # C. Limpieza Numérica Estricta
+    # C. Limpieza Numérica Estricta - esto lo hacemos porque el factor de expansión no está en numérico
     factorA07 = as.numeric(str_replace_all(factorA07, ",", ".")),
     conglome  = as.numeric(conglome),
     estrato   = as.numeric(estrato),
@@ -66,7 +66,7 @@ enaho_explorar <- enaho_limpia %>%
   mutate(across(starts_with("confianza_"), ~na_if(., 9)))     # 9 = Missing
 
 # ------------------------------------------------------------------------------
-# 2. DISEÑO MUESTRAL
+# 2. DISEÑO MUESTRAL------------------------------------------------------------
 # ------------------------------------------------------------------------------
 enaho_diseno <- enaho_explorar %>%
   filter(!is.na(factorA07)) %>%
@@ -75,7 +75,7 @@ enaho_diseno <- enaho_explorar %>%
     strata = estrato,        
     weights = factorA07,     
     nest = TRUE              
-  )
+  ) #Así utilizaremos el factor de expansión
 
 # ==============================================================================
 # 3. EXPLORACIÓN UNIVARIADA: TABLAS DESCRIPTIVAS
