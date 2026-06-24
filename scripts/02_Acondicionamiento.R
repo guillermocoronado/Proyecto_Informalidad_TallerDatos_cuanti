@@ -6,7 +6,7 @@
 # Objetivo: Acondicionar la base de datos consolidada (Tipado, Selección, 
 #           Renombrado, Tratamiento de NAs).
 # ==============================================================================
-
+rm(list = ls())
 # ------------------------------------------------------------------------------
 # 0. CONFIGURACIÓN DEL ENTORNO--------------------------------------------------
 # ------------------------------------------------------------------------------
@@ -323,7 +323,8 @@ renv::snapshot()
 # explican el ingreso (predictores sociodemográficos y laborales).
 
 enaho_tratada_4 <- enaho_tratada_2 %>%
-  filter(trabajo_semana_pasada == 1 | empleo_fijo_volvera == 1 | negocio_volvera == 1)
+  filter(trabajo_semana_pasada == 1 | empleo_fijo_volvera == 1 | negocio_volvera == 1) %>% 
+  mutate(ingreso_prin = ifelse(ingreso_prin == 999999, NA, ingreso_prin))
 
 datos_para_imputar <- enaho_tratada_4 %>%
   select(
