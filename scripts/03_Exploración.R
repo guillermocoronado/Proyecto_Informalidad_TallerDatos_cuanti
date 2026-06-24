@@ -319,23 +319,3 @@ plot_confianza <- ggplot(enaho_explorar %>% filter(!is.na(confianza_jne) & !is.n
   labs(title = "Gráfico 3. Nivel de confianza en el Jurado Nacional de Elecciones (JNE)", x = "Nivel de Confianza", y = "Población", caption = "Fuente: ENAHO 2025. Nota: Excluye NS/NR.") + theme_minimal()
 print(plot_confianza)
 
-# ==============================================================================
-# 5. EXPORTACIÓN DE RESULTADOS
-# ==============================================================================
-if (!dir.exists("outputs/exploracion_cruda")) dir.create("outputs/exploracion_cruda", recursive = TRUE)
-
-# Tablas
-save_as_docx(ft_ocupacion, path = "outputs/exploracion_cruda/Tabla1_Ocupacion.docx")
-save_as_docx(ft_ruc,       path = "outputs/exploracion_cruda/Tabla2_RUC.docx")
-save_as_docx(ft_contrato,  path = "outputs/exploracion_cruda/Tabla3_Contrato.docx")
-save_as_docx(ft_salud,     path = "outputs/exploracion_cruda/Tabla4_Salud.docx")
-save_as_docx(ft_pensiones, path = "outputs/exploracion_cruda/Tabla5_Pensiones.docx")
-save_as_docx(ft_confianza, path = "outputs/exploracion_cruda/Tabla6_RankingConfianza.docx")
-save_as_docx(ft_stats,     path = "outputs/exploracion_cruda/Tabla7_Stats_Continuas.docx")
-
-# Gráficos
-ggsave("outputs/exploracion_cruda/Grafico1_Edad.png", plot = plot_edad, width = 8, height = 5, bg="white")
-ggsave("outputs/exploracion_cruda/Grafico2_Ingreso.png", plot = plot_ingreso, width = 8, height = 5, bg="white")
-ggsave("outputs/exploracion_cruda/Grafico3_ConfianzaJNE.png", plot = plot_confianza, width = 8, height = 5, bg="white")
-
-write_parquet(enaho_explorar, "datos/procesados/enaho_lista_para_clasificar.parquet")
