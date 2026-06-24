@@ -80,15 +80,22 @@ enaho_diseno <- enaho_explorar %>%
 # ==============================================================================
 # 3. EXPLORACIÓN UNIVARIADA: TABLAS DESCRIPTIVAS--------------------------------
 # ==============================================================================
-
 # Definimos una función para crear un formato Flextable estandarizado
 formato_flextable <- function(tabla, titulo) {
   flextable(tabla) %>%
     add_header_lines(values = titulo) %>%
     add_footer_lines(values = "Fuente: ENAHO 2025. Cálculos expandidos a nivel poblacional.") %>%
-    autofit() %>% theme_vanilla() %>% align(align = "center", part = "all") %>% 
-    align(j = 1, align = "left", part = "body") %>% bold(part = "header") %>%
-    align(align = "left", part = "footer") %>% fontsize(size = 9, part = "footer") %>% 
+    autofit() %>% 
+    theme_vanilla() %>% 
+    # TRUCO AQUÍ: Borramos las líneas horizontales internas del cuerpo de la tabla
+    border_inner_h(part = "body", border = officer::fp_border(width = 0)) %>% 
+    align(align = "center", part = "all") %>% 
+    align(j = 1, align = "left", part = "body") %>% 
+    bold(part = "header") %>%
+    align(align = "left", part = "footer") %>% 
+    fontsize(size = 9, part = "footer") %>% 
+    # Aseguramos que la línea final del cuerpo y del pie de página sean correctas
+    hline_bottom(part = "body", border = officer::fp_border(width = 1)) %>% 
     hline_bottom(part = "footer", border = officer::fp_border(width = 0))
 }
 
@@ -115,11 +122,11 @@ tabla_ruc <- enaho_diseno %>%
   mutate(Poblacion = scales::comma(round(Poblacion, 0)), Porcentaje = paste0(round(Porcentaje, 1), "%")) %>%
   rename(`Tipo de registro` = tiene_ruc_etiqueta, `Total (N)` = Poblacion, `%` = Porcentaje)
 
-ft_ruc <- formato_flextable(tabla_ruc, "Tabla 2. Perú: Distribución del centro de trabajo según tipo de registro")
+ft_ruc <- formato_flextable(tabla_ruc, "Tabla 2. Perú: Distribución del centro de trabajo según tipo de registro, 2025")
 print(ft_ruc)
 
 # ------------------------------------------------------------------------------
-# 3.3 Tabla Cruda: Tipo de Contrato (Solo dependientes)
+# 3.3 Tipo de Contrato----------------------------------------------------------
 # ------------------------------------------------------------------------------
 tabla_contrato <- enaho_diseno %>%
   filter(!is.na(tipo_contrato_etiqueta)) %>%
@@ -128,10 +135,11 @@ tabla_contrato <- enaho_diseno %>%
   mutate(Poblacion = scales::comma(round(Poblacion, 0)), Porcentaje = paste0(round(Porcentaje, 1), "%")) %>%
   rename(`Tipo de Contrato` = tipo_contrato_etiqueta, `Total (N)` = Poblacion, `%` = Porcentaje)
 
-ft_contrato <- formato_flextable(tabla_contrato, "Tabla 3. Perú: Trabajadores dependientes según tipo de contrato laboral")
+ft_contrato <- formato_flextable(tabla_contrato, "Tabla 3. Perú: PEA ocupada según tipo de contrato laboral, 2025")
+print(ft_contrato)
 
 # ------------------------------------------------------------------------------
-# 3.4 Bloque Salud (Múltiples variables combinadas)
+# 3.4 Bloque Salud (Múltiples variables combinadas)-----------------------------
 # ------------------------------------------------------------------------------
 tabla_salud <- enaho_explorar %>%
   select(conglome, estrato, factorA07, starts_with("afiliado_"), -afiliado_SPP, -starts_with("afiliado_SNP")) %>%
@@ -142,16 +150,25 @@ tabla_salud <- enaho_explorar %>%
   summarise(Poblacion = survey_total(vartype = NULL)) %>%
   mutate(
     Porcentaje = (Poblacion / sum(enaho_explorar$factorA07, na.rm = TRUE)) * 100,
-    Poblacion = scales::comma(round(Poblacion, 0)), Porcentaje = paste0(round(Porcentaje, 1), "%"),
-    Seguro = str_to_title(str_remove(Seguro, "afiliado_"))
+    Poblacion = scales::comma(round(Poblacion, 0)), 
+    Porcentaje = paste0(round(Porcentaje, 1), "%"),
+    Seguro = str_to_title(str_remove(Seguro, "afiliado_")),
+    # Corrección manual de siglas y nombres específicos
+    Seguro = case_when(
+      Seguro == "Sis" ~ "SIS",
+      Seguro == "Eps" ~ "EPS",
+      Seguro == "Ffaa_policiales" ~ "Sanidad de las FFAA o PNP",
+      TRUE ~ Seguro
+    )
   ) %>%
   arrange(desc(parse_number(str_remove(Poblacion, ",")))) %>%
   rename(`Sistema de Salud` = Seguro, `Afiliados (N)` = Poblacion, `% de la PEA` = Porcentaje)
 
-ft_salud <- formato_flextable(tabla_salud, "Tabla 4. Perú: Población ocupada afiliada a sistemas de salud")
+ft_salud <- formato_flextable(tabla_salud, "Tabla 4. Perú: PEA ocupada según su afiliación a sistemas de salud, 2025")
+print(ft_salud)
 
 # ------------------------------------------------------------------------------
-# 3.5 Bloque Pensiones (NUEVO: Múltiples variables combinadas)
+# 3.5 Bloque Pensiones (Múltiples variables combinadas)
 # ------------------------------------------------------------------------------
 tabla_pensiones <- enaho_explorar %>%
   select(conglome, estrato, factorA07, afiliado_SPP, starts_with("afiliado_SNP"), no_afiliado_pensiones) %>%
@@ -164,9 +181,9 @@ tabla_pensiones <- enaho_explorar %>%
     Porcentaje = (Poblacion / sum(enaho_explorar$factorA07, na.rm = TRUE)) * 100,
     Poblacion = scales::comma(round(Poblacion, 0)), Porcentaje = paste0(round(Porcentaje, 1), "%"),
     Sistema = case_when(
-      Sistema == "afiliado_SPP" ~ "AFP (Sistema Privado)",
-      Sistema == "afiliado_SNP_19990" ~ "ONP (Régimen 19990)",
-      Sistema == "afiliado_SNP_20530" ~ "Cédula Viva (Régimen 20530)",
+      Sistema == "afiliado_SPP" ~ "Sistema Privado de Pensiones",
+      Sistema == "afiliado_SNP_19990" ~ "Sistema Nacional de Pensiones (DL 19990)",
+      Sistema == "afiliado_SNP_20530" ~ "Régimen DL 20530",
       Sistema == "afiliado_SNP_otro" ~ "Otro sistema público",
       Sistema == "no_afiliado_pensiones" ~ "Sin afiliación previsional"
     )
@@ -174,10 +191,11 @@ tabla_pensiones <- enaho_explorar %>%
   arrange(desc(parse_number(str_remove(Poblacion, ",")))) %>%
   rename(`Sistema de Pensiones` = Sistema, `Afiliados (N)` = Poblacion, `% de la PEA` = Porcentaje)
 
-ft_pensiones <- formato_flextable(tabla_pensiones, "Tabla 5. Perú: Población ocupada afiliada a sistemas de pensiones")
+ft_pensiones <- formato_flextable(tabla_pensiones, "Tabla 5. Perú: PEA ocupada según afiliación a sistemas de pensiones")
+print(ft_pensiones)
 
 # ------------------------------------------------------------------------------
-# 3.6 Bloque Confianza Institucional (NUEVO: Ranking de promedios ponderados)
+# 3.6 Bloque Confianza Institucional (Ranking de promedios ponderados)
 # ------------------------------------------------------------------------------
 tabla_confianza <- enaho_explorar %>%
   select(conglome, estrato, factorA07, starts_with("confianza_")) %>%
@@ -187,29 +205,89 @@ tabla_confianza <- enaho_explorar %>%
   group_by(Institucion) %>%
   summarise(Promedio = survey_mean(Nivel, vartype = NULL)) %>%
   mutate(
+    # Primero limpiamos el prefijo y los guiones bajos
     Institucion = str_to_title(str_replace_all(str_remove(Institucion, "confianza_"), "_", " ")),
+    
+    # Luego aplicamos el diccionario exacto de nombres oficiales
+    Institucion = case_when(
+      Institucion == "Reniec" ~ "Registro Nacional de Identidad y Estado Civil - RENIEC",
+      Institucion == "Minedu" ~ "Ministerio de Educación",
+      Institucion == "Ffaa" ~ "Fuerzas Armadas",
+      Institucion == "Defensoria" ~ "Defensoría del Pueblo",
+      Institucion == "Radiotv" ~ "Radio y Televisión",
+      Institucion == "Sunat" ~ "Superintendencia Nacional de Administración Tributaria - SUNAT",
+      Institucion == "Onpe" ~ "Oficina Nacional de Procesos Electorales - ONPE",
+      Institucion == "Muni Distrital" ~ "Municipalidad Distrital",
+      Institucion == "Jne" ~ "Jurado Nacional de Elecciones - JNE",
+      Institucion == "Muni Provincial" ~ "Municipalidad Provincial",
+      Institucion == "Pnp" ~ "Policía Nacional del Perú - PNP",
+      Institucion == "Pj" ~ "Poder Judicial",
+      Institucion == "Fiscalia" ~ "Ministerio Público",
+      Institucion == "Contraloria" ~ "Contraloría General de la Nación",
+      Institucion == "Gore" ~ "Gobierno Regional",
+      Institucion == "Procuraduria" ~ "Procuraduría Anticorrupción",
+      Institucion == "Comision Anticorrupcion" ~ "Comisión Anticorrupción",
+      Institucion == "Partidos" ~ "Partidos políticos",
+      Institucion == "Congreso" ~ "Congreso de la República",
+      TRUE ~ Institucion # Por si se nos escapa alguna 
+    ),
     Promedio = round(Promedio, 2)
   ) %>%
   select(Institucion, Promedio) %>% 
   arrange(desc(Promedio)) %>%
   rename(`Institución Evaluada` = Institucion, `Nivel Promedio (1=Nada, 4=Bastante)` = Promedio)
 
-ft_confianza <- formato_flextable(tabla_confianza, "Tabla 6. Perú: Ranking de confianza institucional en la PEA ocupada")
+ft_confianza <- formato_flextable(tabla_confianza, "Tabla 6. Perú: Confianza en instituciones entre la PEA ocupada, 2025")
+print(ft_confianza)
 
 # ------------------------------------------------------------------------------
-# 3.7 Estadísticos de variables numéricas continuas (Edad e Ingreso)
+# 3.7 Estadísticos de resumen: Edad (Variable Continua)
 # ------------------------------------------------------------------------------
-stats_continuas <- enaho_diseno %>%
+stats_edad <- enaho_diseno %>%
+  filter(!is.na(edad)) %>%
   summarise(
-    `Edad: Promedio` = survey_mean(edad, na.rm = TRUE, vartype = NULL),
-    `Edad: Mediana`  = survey_median(edad, na.rm = TRUE, vartype = NULL),
-    `Ingreso: Promedio` = survey_mean(ingreso_prin_imputado, na.rm = TRUE, vartype = NULL),
-    `Ingreso: Mediana`  = survey_median(ingreso_prin_imputado, na.rm = TRUE, vartype = NULL)
+    `Mínimo` = min(edad, na.rm = TRUE),
+    `Percentil 25 (Q1)` = survey_quantile(edad, 0.25, vartype = NULL),
+    `Mediana (Q2)` = survey_median(edad, vartype = NULL),
+    `Media (Promedio)` = survey_mean(edad, vartype = NULL),
+    `Desviación Estándar` = survey_sd(edad, vartype = NULL),
+    `Percentil 75 (Q3)` = survey_quantile(edad, 0.75, vartype = NULL),
+    `Máximo` = max(edad, na.rm = TRUE)
   ) %>%
-  pivot_longer(cols = everything(), names_to = "Indicador", values_to = "Valor") %>%
-  mutate(Valor = scales::comma(round(Valor, 1)))
+  pivot_longer(cols = everything(), names_to = "Estadístico", values_to = "Valor (Años)") %>%
+  mutate(
+    # Borramos los sufijos automáticos (_q25, _q75, etc.) que genera srvyr
+    Estadístico = str_remove(Estadístico, "_q[0-9]+"),
+    `Valor (Años)` = scales::comma(round(`Valor (Años)`, 1))
+  )
 
-ft_stats <- formato_flextable(stats_continuas, "Tabla 7. Perú: Estadísticos de resumen para Edad e Ingreso Principal")
+ft_edad <- formato_flextable(stats_edad, "Tabla 7. Perú: Edad de la PEA Ocupada (estadísticos de resumen), 2025")
+print(ft_edad)
+
+# ------------------------------------------------------------------------------
+# 3.8 Estadísticos de resumen: Ingreso Principal (Variable Continua)
+# ------------------------------------------------------------------------------
+stats_ingreso <- enaho_diseno %>%
+  filter(!is.na(ingreso_prin_imputado)) %>%
+  summarise(
+    `Mínimo` = min(ingreso_prin_imputado, na.rm = TRUE),
+    `Percentil 25 (Q1)` = survey_quantile(ingreso_prin_imputado, 0.25, vartype = NULL),
+    `Mediana (Q2)` = survey_median(ingreso_prin_imputado, vartype = NULL),
+    `Media (Promedio)` = survey_mean(ingreso_prin_imputado, vartype = NULL),
+    `Desviación Estándar` = survey_sd(ingreso_prin_imputado, vartype = NULL),
+    `Percentil 75 (Q3)` = survey_quantile(ingreso_prin_imputado, 0.75, vartype = NULL),
+    `Percentil 90 (P90)` = survey_quantile(ingreso_prin_imputado, 0.90, vartype = NULL),
+    `Percentil 99 (P99)` = survey_quantile(ingreso_prin_imputado, 0.99, vartype = NULL),
+    `Máximo` = max(ingreso_prin_imputado, na.rm = TRUE)
+  ) %>%
+  pivot_longer(cols = everything(), names_to = "Estadístico", values_to = "Valor (Soles)") %>%
+  mutate(
+    Estadístico = str_remove(Estadístico, "_q[0-9]+"),
+    `Valor (Soles)` = scales::comma(round(`Valor (Soles)`, 1))
+  )
+
+ft_ingreso <- formato_flextable(stats_ingreso, "Tabla 8. Perú: Ingreso proveniente de la ocupación principal de la PEA Ocupada (estadísticos de resumen), 2025")
+print(ft_ingreso) #Importancia de imputar bien!
 
 # ==============================================================================
 # 4. EXPLORACIÓN UNIVARIADA: GRÁFICOS
@@ -220,22 +298,26 @@ plot_edad <- ggplot(enaho_explorar %>% filter(!is.na(edad) & !is.na(factorA07)),
                     aes(x = edad, weight = factorA07)) +
   geom_histogram(fill = "#4A7C59", color = "white", binwidth = 2) +
   scale_y_continuous(labels = scales::comma) +
-  labs(title = "Gráfico 1. Distribución de edad de la PEA ocupada", x = "Edad (años)", y = "Frecuencia Poblacional", caption = "Fuente: ENAHO 2025.") + theme_minimal()
+  labs(title = "Gráfico 1. Distribución de edad de la PEA ocupada", x = "Edad (años)", y = "Frecuencia Poblacional", caption = "Fuente: ENAHO 2025. Cálculos ajustados a nivel poblacional") + theme_minimal()
+print(plot_edad)
+
 
 # 4.2 Histograma: Ingreso Principal (Ponderado)
 plot_ingreso <- ggplot(enaho_explorar %>% filter(!is.na(ingreso_prin_imputado) & !is.na(factorA07)), 
                        aes(x = ingreso_prin_imputado, weight = factorA07)) +
   geom_histogram(fill = "#2E5B88", color = "white", bins = 50) +
   coord_cartesian(xlim = c(0, 10000)) + scale_x_continuous(labels = scales::comma) + scale_y_continuous(labels = scales::comma) +
-  labs(title = "Gráfico 2. Distribución del ingreso principal", x = "Ingreso (Soles)", y = "Frecuencia Poblacional", caption = "Fuente: ENAHO 2025. Nota: Eje X truncado en S/10,000.") + theme_minimal()
+  labs(title = "Gráfico 2. Distribución del ingreso principal", x = "Ingreso (Soles)", y = "Frecuencia Poblacional", caption = "Fuente: ENAHO 2025. Nota: Eje X truncado en S/10,000. Cálculos ajustados a nivel poblacional") + theme_minimal()
+print(plot_ingreso)
 
 # 4.3 Barras: Confianza en el JNE 
-plot_confianza <- ggplot(enaho_explorar %>% filter(!is.na(confianza_JNE) & !is.na(factorA07)), 
-                         aes(x = as.factor(confianza_JNE), weight = factorA07)) +
+plot_confianza <- ggplot(enaho_explorar %>% filter(!is.na(confianza_jne) & !is.na(factorA07)), 
+                         aes(x = as.factor(confianza_jne), weight = factorA07)) +
   geom_bar(fill = "#E69F00", alpha = 0.8) +
   scale_x_discrete(labels = c("1" = "1. Nada", "2" = "2. Poco", "3" = "3. Suficiente", "4" = "4. Bastante")) +
   scale_y_continuous(labels = scales::comma) +
   labs(title = "Gráfico 3. Nivel de confianza en el Jurado Nacional de Elecciones (JNE)", x = "Nivel de Confianza", y = "Población", caption = "Fuente: ENAHO 2025. Nota: Excluye NS/NR.") + theme_minimal()
+print(plot_confianza)
 
 # ==============================================================================
 # 5. EXPORTACIÓN DE RESULTADOS
