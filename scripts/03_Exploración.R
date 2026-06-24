@@ -106,16 +106,17 @@ ft_ocupacion <- formato_flextable(tabla_ocupacion, "Tabla 1. Perú: Distribució
 print(ft_ocupacion)
 
 # ------------------------------------------------------------------------------
-# 3.2 Tabla Cruda: Condición de RUC
+# 3.2 Formalidad del centro de trabajo------------------------------------------
 # ------------------------------------------------------------------------------
 tabla_ruc <- enaho_diseno %>%
   filter(!is.na(tiene_ruc_etiqueta)) %>%
   group_by(tiene_ruc_etiqueta) %>%
   summarise(Poblacion = survey_total(vartype = NULL), Porcentaje = survey_mean(vartype = NULL) * 100) %>%
   mutate(Poblacion = scales::comma(round(Poblacion, 0)), Porcentaje = paste0(round(Porcentaje, 1), "%")) %>%
-  rename(`Condición de RUC` = tiene_ruc_etiqueta, `Total (N)` = Poblacion, `%` = Porcentaje)
+  rename(`Tipo de registro` = tiene_ruc_etiqueta, `Total (N)` = Poblacion, `%` = Porcentaje)
 
-ft_ruc <- formato_flextable(tabla_ruc, "Tabla 2. Perú: Distribución del centro de trabajo según tipo de registro (RUC)")
+ft_ruc <- formato_flextable(tabla_ruc, "Tabla 2. Perú: Distribución del centro de trabajo según tipo de registro")
+print(ft_ruc)
 
 # ------------------------------------------------------------------------------
 # 3.3 Tabla Cruda: Tipo de Contrato (Solo dependientes)
