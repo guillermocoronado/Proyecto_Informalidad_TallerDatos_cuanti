@@ -1,10 +1,10 @@
-# ==============================================================================
-# Proyecto: Análisis de la informalidad laboral utilizando datos de la ENAHO
+# =========================================================================================
+# Proyecto: Análisis de la informalidad laboral y el bienestar utilizando datos de la ENAHO
 # Script: Exploración 
 # Autor: Guillermo Coronado
 # Fecha: 19-06-2026
 # Objetivo: Análisis de Datos Exploratorio (EDA) de la base de datos procesda
-# ==============================================================================
+# =========================================================================================
 
 rm(list = ls())
 
