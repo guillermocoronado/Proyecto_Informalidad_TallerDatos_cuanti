@@ -13,7 +13,7 @@ rm(list = ls())
 # ------------------------------------------------------------------------------
 library(tidyverse)
 library(arrow)
-library(survey)      # Para declarar diseños muestrales complejos
+library(survey)      # Para declarar diseños muestrales complejos (factor de expansión)
 library(srvyr)       # Para usar dplyr con encuestas complejas
 library(gtsummary)   # Para tablas descriptivas con calidad de publicación
 library(flextable)   # Para exportar tablas a Word
