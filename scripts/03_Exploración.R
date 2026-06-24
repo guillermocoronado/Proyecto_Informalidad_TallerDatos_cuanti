@@ -78,10 +78,10 @@ enaho_diseno <- enaho_explorar %>%
   ) #Así utilizaremos el factor de expansión
 
 # ==============================================================================
-# 3. EXPLORACIÓN UNIVARIADA: TABLAS DESCRIPTIVAS
+# 3. EXPLORACIÓN UNIVARIADA: TABLAS DESCRIPTIVAS--------------------------------
 # ==============================================================================
 
-# Helper function para crear el formato Flextable estandarizado
+# Definimos una función para crear un formato Flextable estandarizado
 formato_flextable <- function(tabla, titulo) {
   flextable(tabla) %>%
     add_header_lines(values = titulo) %>%
@@ -93,7 +93,7 @@ formato_flextable <- function(tabla, titulo) {
 }
 
 # ------------------------------------------------------------------------------
-# 3.1 Tabla Cruda: Categoría Ocupacional
+# 3.1 Tabla Cruda: Categoría Ocupacional----------------------------------------
 # ------------------------------------------------------------------------------
 tabla_ocupacion <- enaho_diseno %>%
   filter(!is.na(categoria_ocupacional_etiqueta)) %>%
