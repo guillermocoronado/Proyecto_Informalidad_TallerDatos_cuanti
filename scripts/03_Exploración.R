@@ -11,6 +11,7 @@ rm(list = ls())
 # ------------------------------------------------------------------------------
 # 0. CONFIGURACIÓN Y CARGA DE DATOS
 # ------------------------------------------------------------------------------
+library(webshot2)
 library(tidyverse)
 library(arrow)
 library(survey)      
@@ -462,3 +463,33 @@ plot_edad_ingreso <- ggplot(enaho_explorar %>%
   theme_minimal()
 
 print(plot_edad_ingreso)
+
+# =====================================================================================
+# 6. EXPORTACIÓN MASIVA (Imágenes para Informe descriptivo que haremos en Markdown)----
+# =====================================================================================
+
+# Definimos la ruta de salida específica
+ruta_salida <- "outputs/outputs_exploracion_inicial"
+
+# Aseguramos el directorio de salida
+if (!dir.exists(ruta_salida)) {
+  dir.create(ruta_salida, recursive = TRUE)
+}
+
+save_as_image(ft_ocupacion,    path = paste0(ruta_salida, "/Tabla1_Ocupacion.png"))
+save_as_image(ft_ruc,          path = paste0(ruta_salida, "/Tabla2_RUC.png"))
+save_as_image(ft_contrato,     path = paste0(ruta_salida, "/Tabla3_Contrato.png"))
+save_as_image(ft_salud,        path = paste0(ruta_salida, "/Tabla4_Salud.png"))
+save_as_image(ft_pensiones,    path = paste0(ruta_salida, "/Tabla5_Pensiones.png"))
+save_as_image(ft_confianza,    path = paste0(ruta_salida, "/Tabla6_RankingConfianza.png"))
+save_as_image(ft_edad,         path = paste0(ruta_salida, "/Tabla7_Stats_Edad.png"))
+save_as_image(ft_ingreso,      path = paste0(ruta_salida, "/Tabla8_Stats_Ingreso.png"))
+
+ggsave(paste0(ruta_salida, "/Grafico1_Edad.png"),              plot = plot_edad,           width = 8, height = 5, bg = "white")
+ggsave(paste0(ruta_salida, "/Grafico2_Ingreso.png"),           plot = plot_ingreso,        width = 8, height = 5, bg = "white")
+ggsave(paste0(ruta_salida, "/Grafico3_ConfianzaJNE.png"),      plot = plot_confianza,      width = 8, height = 5, bg = "white")
+ggsave(paste0(ruta_salida, "/Grafico4_Ingreso_Contrato.png"),  plot = plot_ingreso_contrato, width = 8, height = 5, bg = "white")
+ggsave(paste0(ruta_salida, "/Grafico5_Ingreso_RUC_Sexo.png"),  plot = plot_ingreso_ruc_sexo, width = 8, height = 5, bg = "white")
+ggsave(paste0(ruta_salida, "/Grafico6_Confianza_Congreso.png"), plot = plot_confianza_ruc,   width = 8, height = 5, bg = "white")
+ggsave(paste0(ruta_salida, "/Grafico7_Edad_Ingreso_Scatter.png"), plot = plot_edad_ingreso,  width = 8, height = 5, bg = "white")
+
