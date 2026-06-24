@@ -484,6 +484,9 @@ save_as_image(ft_pensiones,    path = paste0(ruta_salida, "/Tabla5_Pensiones.png
 save_as_image(ft_confianza,    path = paste0(ruta_salida, "/Tabla6_RankingConfianza.png"))
 save_as_image(ft_edad,         path = paste0(ruta_salida, "/Tabla7_Stats_Edad.png"))
 save_as_image(ft_ingreso,      path = paste0(ruta_salida, "/Tabla8_Stats_Ingreso.png"))
+save_as_image(ft_discapacidad, path = paste0(ruta_salida, "/Tabla9_Discapacidad.png"))
+save_as_image(ft_ruc_sexo,     path = paste0(ruta_salida, "/Tabla10_RegistroSexo.png"))
+save_as_image(ft_contrato_sexo,path = paste0(ruta_salida, "/Tabla11_ContratoSexo.png"))
 
 ggsave(paste0(ruta_salida, "/Grafico1_Edad.png"),              plot = plot_edad,           width = 8, height = 5, bg = "white")
 ggsave(paste0(ruta_salida, "/Grafico2_Ingreso.png"),           plot = plot_ingreso,        width = 8, height = 5, bg = "white")
