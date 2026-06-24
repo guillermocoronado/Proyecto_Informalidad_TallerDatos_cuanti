@@ -3,7 +3,7 @@
 # Script: Exploración 
 # Autor: Guillermo Coronado
 # Fecha: 19-06-2026
-# Objetivo: Análisis de Datos Exploratorio (EDA) de la base de datos procesda
+# Objetivo: Análisis de Datos Exploratorio (EDA) de la base de datos procesada
 # =========================================================================================
 
 rm(list = ls())
