@@ -1,0 +1,7 @@
+---
+title: "04_Informe_Exploracion_Inicial"
+author: "Guillermo Coronado"
+date: "2026-06-24"
+output: html_document
+---
+
