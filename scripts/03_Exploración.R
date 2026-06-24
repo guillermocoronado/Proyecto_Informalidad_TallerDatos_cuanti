@@ -289,6 +289,39 @@ stats_ingreso <- enaho_diseno %>%
 ft_ingreso <- formato_flextable(stats_ingreso, "Tabla 8. Perú: Ingreso proveniente de la ocupación principal de la PEA Ocupada (estadísticos de resumen), 2025")
 print(ft_ingreso) #Importancia de imputar bien!
 
+# ------------------------------------------------------------------------------
+# 3.9 Bloque Discapacidad (Múltiples variables combinadas)
+# ------------------------------------------------------------------------------
+tabla_discapacidad <- enaho_explorar %>%
+  select(conglome, estrato, factorA07, starts_with("discapacidad_")) %>%
+  pivot_longer(cols = starts_with("discapacidad_"), names_to = "Tipo", values_to = "Tiene") %>%
+  filter(Tiene == 1) %>% # Retenemos solo a quienes indicaron "1" (Sí tienen la dificultad)
+  as_survey_design(ids = conglome, strata = estrato, weights = factorA07, nest = TRUE) %>%
+  group_by(Tipo) %>%
+  summarise(Poblacion = survey_total(vartype = NULL)) %>%
+  mutate(
+    # Calculamos el % sobre el total de la PEA expandida
+    Porcentaje = (Poblacion / sum(enaho_explorar$factorA07, na.rm = TRUE)) * 100,
+    Poblacion = scales::comma(round(Poblacion, 0)), 
+    Porcentaje = paste0(round(Porcentaje, 1), "%"),
+    
+    # Limpiamos los nombres para la tabla final
+    Tipo = case_when(
+      Tipo == "discapacidad_moverse" ~ "Dificultad para moverse o caminar",
+      Tipo == "discapacidad_visual" ~ "Dificultad visual (aun usando lentes)",
+      Tipo == "discapacidad_comunicarse" ~ "Dificultad para hablar o comunicarse",
+      Tipo == "discapacidad_auditiva" ~ "Dificultad auditiva (aun usando audífonos)",
+      Tipo == "discapacidad_cognitiva" ~ "Dificultad para entender o aprender",
+      Tipo == "discapacidad_social" ~ "Dificultad para relacionarse con los demás",
+      TRUE ~ str_to_title(str_replace_all(Tipo, "_", " "))
+    )
+  ) %>%
+  arrange(desc(parse_number(str_remove(Poblacion, ",")))) %>%
+  rename(`Tipo de Dificultad / Discapacidad` = Tipo, `Población (N)` = Poblacion, `% de la PEA` = Porcentaje)
+
+ft_discapacidad <- formato_flextable(tabla_discapacidad, "Tabla 9. Perú: PEA ocupada según tipo de dificultad o discapacidad, 2025")
+print(ft_discapacidad)
+
 # ==============================================================================
 # 4. EXPLORACIÓN UNIVARIADA: GRÁFICOS
 # ==============================================================================
@@ -319,3 +352,90 @@ plot_confianza <- ggplot(enaho_explorar %>% filter(!is.na(confianza_jne) & !is.n
   labs(title = "Gráfico 3. Nivel de confianza en el Jurado Nacional de Elecciones (JNE)", x = "Nivel de Confianza", y = "Población", caption = "Fuente: ENAHO 2025. Nota: Excluye NS/NR.") + theme_minimal()
 print(plot_confianza)
 
+# ==============================================================================
+# 5. EXPLORACIÓN BIVARIADA: RELACIONES ENTRE VARIABLES 
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# 5.1 Categórica vs. Categórica (Tablas de Contingencia)
+# ------------------------------------------------------------------------------
+
+# A. Registro del centro de trabajo según Sexo (Porcentajes por fila)
+tabla_ruc_sexo_datos <- enaho_diseno %>%
+  filter(!is.na(sexo_etiqueta) & !is.na(tiene_ruc_etiqueta)) %>%
+  group_by(sexo_etiqueta, tiene_ruc_etiqueta) %>%
+  summarise(Poblacion = survey_total(vartype = NULL)) %>%
+  group_by(sexo_etiqueta) %>%
+  mutate(
+    Porcentaje = (Poblacion / sum(Poblacion)) * 100,
+    Celda = paste0(scales::comma(round(Poblacion, 0)), " (", round(Porcentaje, 1), "%)")
+  ) %>%
+  select(sexo_etiqueta, tiene_ruc_etiqueta, Celda) %>%
+  pivot_wider(names_from = tiene_ruc_etiqueta, values_from = Celda) %>%
+  rename(`Sexo` = sexo_etiqueta)
+
+ft_ruc_sexo <- formato_flextable(tabla_ruc_sexo_datos, "Tabla 10. Perú: Tipo de registro del centro de trabajo según sexo de la PEA Ocupada, 2025")
+print(ft_ruc_sexo)
+
+# B. Tipo de Contrato según Sexo (Porcentajes por fila)
+tabla_contrato_sexo_datos <- enaho_diseno %>%
+  filter(!is.na(sexo_etiqueta) & !is.na(tipo_contrato_etiqueta)) %>%
+  group_by(sexo_etiqueta, tipo_contrato_etiqueta) %>%
+  summarise(Poblacion = survey_total(vartype = NULL)) %>%
+  group_by(sexo_etiqueta) %>%
+  mutate(
+    Porcentaje = (Poblacion / sum(Poblacion)) * 100,
+    Celda = paste0(scales::comma(round(Poblacion, 0)), " (", round(Porcentaje, 1), "%)")
+  ) %>%
+  select(sexo_etiqueta, tipo_contrato_etiqueta, Celda) %>%
+  pivot_wider(names_from = tipo_contrato_etiqueta, values_from = Celda) %>%
+  rename(`Sexo` = sexo_etiqueta)
+
+ft_contrato_sexo <- formato_flextable(tabla_contrato_sexo_datos, "Tabla 11. Perú: Tipo de contrato laboral según sexo de la PEA Ocupada, 2025")
+print(ft_contrato_sexo)
+
+# ------------------------------------------------------------------------------
+# 5.2 Categórica vs. Continua (Boxplots por grupos)
+# ------------------------------------------------------------------------------
+# Paquete necesario para estimación de cuantiles ponderados en gráficos
+if(!require(quantreg)) install.packages("quantreg")
+renv::snapshot()
+
+# A. Ingreso principal según Tipo de Contrato
+plot_ingreso_contrato <- ggplot(enaho_explorar %>% filter(!is.na(tipo_contrato_etiqueta) & !is.na(ingreso_prin_imputado)), 
+                                aes(x = tipo_contrato_etiqueta, y = ingreso_prin_imputado, fill = tipo_contrato_etiqueta, weight = factorA07)) +
+  geom_boxplot(alpha = 0.7, outlier.color = "red", outlier.alpha = 0.3) +
+  coord_cartesian(ylim = c(0, 10000)) + scale_y_continuous(labels = scales::comma) +
+  labs(title = "Gráfico 4. Ingreso proveniente de la ocupación principal según tipo de contrato", x = "Tipo de Contrato", y = "Ingreso (Soles corrientes)") +
+  theme_minimal() + theme(legend.position = "none", axis.text.x = element_text(angle = 45, hjust = 1))
+print(plot_ingreso_contrato)
+
+# B. Ingreso principal según Registro del Centro de Trabajo (RUC) y Sexo (Multivariado)
+plot_ingreso_ruc_sexo <- ggplot(enaho_explorar %>% filter(!is.na(tiene_ruc_etiqueta) & !is.na(sexo_etiqueta) & !is.na(ingreso_prin_imputado)), 
+                                aes(x = tiene_ruc_etiqueta, y = ingreso_prin_imputado, fill = sexo_etiqueta, weight = factorA07)) +
+  geom_boxplot(alpha = 0.8, outlier.color = "red", outlier.alpha = 0.3) +
+  coord_cartesian(ylim = c(0, 10000)) + scale_y_continuous(labels = scales::comma) +
+  scale_fill_manual(values = c("#2E5B88", "#E69F00")) +
+  labs(title = "Gráfico 5. Perú: Ingreso proveniente de la ocupación según registro del centro de trabajo, por sexo, 2025", x = "Tipo de Registro (RUC)", y = "Ingreso (Soles corrientes)", fill = "Sexo:") +
+  theme_minimal() + theme(legend.position = "bottom")
+print(plot_ingreso_ruc_sexo)
+
+# C. Confianza en el Congreso según Registro del Centro de Trabajo
+plot_confianza_ruc <- ggplot(enaho_explorar %>% filter(!is.na(tiene_ruc_etiqueta) & !is.na(confianza_congreso)), 
+                             aes(x = tiene_ruc_etiqueta, y = as.numeric(confianza_congreso), fill = tiene_ruc_etiqueta, weight = factorA07)) +
+  geom_boxplot(alpha = 0.6) +
+  labs(title = "Gráfico 6. Perú: Nivel de confianza en el Congreso según registro del centro de trabajo", x = "Tipo de Registro (RUC)", y = "Confianza (1 = Nada, 4 = Bastante)") +
+  theme_minimal() + theme(legend.position = "none")
+print(plot_confianza_ruc)
+
+# ------------------------------------------------------------------------------
+# 5.3 Continua vs. Continua (Gráfico de Dispersión / Scatter)
+# ------------------------------------------------------------------------------
+plot_edad_ingreso <- ggplot(enaho_explorar %>% filter(!is.na(edad) & !is.na(ingreso_prin_imputado)), 
+                            aes(x = edad, y = ingreso_prin_imputado)) +
+  geom_jitter(alpha = 0.1, color = "#4A7C59", width = 0.5, height = 0) +
+  geom_smooth(method = "gam", color = "red", se = FALSE) + 
+  coord_cartesian(ylim = c(0, 15000)) + scale_y_continuous(labels = scales::comma) +
+  labs(title = "Gráfico 7. Relación entre Edad e Ingreso Principal", subtitle = "Con línea de tendencia suavizada", x = "Edad (Años)", y = "Ingreso (Soles corrientes)") +
+  theme_minimal()
+print(plot_edad_ingreso)
