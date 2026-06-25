@@ -19,7 +19,7 @@ library(flextable)
 renv::snapshot()
 
 # Cargamos la base de datos limpia
-enaho_limpia <- read_parquet(here("datos", "procesados", "enaho_2025_19_06_25.parquet"))
+enaho_limpia <- read_parquet(here("datos", "procesados", "enaho_2025_19_06_26.parquet"))
 
 # ==============================================================================
 # 1. PREPARACIÓN DE VARIABLES ANALÍTICAS----------------------------------------
