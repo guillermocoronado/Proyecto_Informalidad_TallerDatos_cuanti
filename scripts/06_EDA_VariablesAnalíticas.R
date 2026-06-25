@@ -389,3 +389,29 @@ grafico_nuevas_vars <- ggplot(enaho_analitica %>% filter(!is.na(tipologia_labora
 
 print(grafico_nuevas_vars)
 
+# ==============================================================================
+# 5. EXPORTACIÓN DE TABLAS Y GRÁFICOS
+# ==============================================================================
+
+# ==============================================================================
+# 5. EXPORTACIÓN DE TABLAS Y GRÁFICOS
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# 5.1 Exportación de Tablas (Word)
+# ------------------------------------------------------------------------------
+save_as_docx(tabla_uni_word,         path = here("outputs", "outputs_exploracion_analitica", "Tabla1_Condicion_Formalidad.docx"))
+save_as_docx(tabla_stats_word,       path = here("outputs", "outputs_exploracion_analitica", "Tabla2_Estadisticos_Ingreso.docx"))
+save_as_docx(tabla_negro_word,       path = here("outputs", "outputs_exploracion_analitica", "Tabla3_Matriz_Sector_Empleo.docx"))
+save_as_docx(tabla_perfil_word,      path = here("outputs", "outputs_exploracion_analitica", "Tabla4_Perfil_Vulnerabilidad.docx"))
+save_as_docx(tabla_nuevas_vars_word, path = here("outputs", "outputs_exploracion_analitica", "Tabla5_Nuevas_Variables.docx"))
+
+# ------------------------------------------------------------------------------
+# 5.2 Exportación de Gráficos (PNG Alta Resolución)
+# ------------------------------------------------------------------------------
+ggsave(here("outputs", "outputs_exploracion_analitica", "Grafico1_Histograma_Ingresos.png"),     plot = grafico_hist,              width = 10, height = 6, dpi = 300, bg = "white")
+ggsave(here("outputs", "outputs_exploracion_analitica", "Grafico2_Matriz_Sector_Empleo.png"),    plot = grafico_negro,             width = 10, height = 6, dpi = 300, bg = "white")
+ggsave(here("outputs", "outputs_exploracion_analitica", "Grafico4_Brecha_Salarial_Sexo.png"),    plot = grafico_brecha_sexo,       width = 11, height = 6, dpi = 300, bg = "white")
+ggsave(here("outputs", "outputs_exploracion_analitica", "Grafico5_Confianza_Institucional.png"), plot = grafico_confianza,         width = 10, height = 6, dpi = 300, bg = "white")
+ggsave(here("outputs", "outputs_exploracion_analitica", "Grafico6_Tendencia_Edad_Confianza.png"),plot = grafico_nuevas_vars,       width = 11, height = 6, dpi = 300, bg = "white")
+ggsave(here("outputs", "outputs_exploracion_analitica", "Grafico7_Ingreso_Tipologia_MECE.png"),  plot = grafico_ingreso_tipologia, width = 11, height = 6, dpi = 300, bg = "white")
