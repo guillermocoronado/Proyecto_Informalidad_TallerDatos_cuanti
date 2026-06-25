@@ -14,13 +14,15 @@ library(arrow)
 library(survey)      # Para declarar diseños muestrales complejos (factor de expansión)
 library(srvyr)       # Para usar dplyr con encuestas complejas
 library(here)
+library(gtsummary)
+library(flextable)
 renv::snapshot()
 
 # Cargamos la base de datos limpia
 enaho_limpia <- read_parquet(here("datos", "procesados", "enaho_2025_19_06_25.parquet"))
 
 # ==============================================================================
-# 1. PREPARACIÓN DE VARIABLES ANALÍTICAS 
+# 1. PREPARACIÓN DE VARIABLES ANALÍTICAS----------------------------------------
 # ==============================================================================
 
 # Limpieza previa de formatos numéricos (Necesario para los cálculos posteriores)
@@ -151,5 +153,70 @@ mutate(across(starts_with("confianza_"), ~na_if(., 5))) %>%
 enaho_diseno_analitico <- enaho_analitica %>%
   filter(!is.na(factorA07)) %>%
   as_survey_design(ids = conglome, strata = estrato, weights = factorA07, nest = TRUE)
+
+# ==============================================================================
+# 2. EXPORTAR BASE DE DATOS ANALÍTICA-------------------------------------------
+# ==============================================================================
+
+# Guardamos la base con las nuevas variables creadas
+# ==============================================================================
+# 2. EXPORTAR BASE DE DATOS ANALÍTICA
+# ==============================================================================
+
+# Guardamos la base con las nuevas variables creadas
+write_parquet(
+  enaho_analitica, 
+  here::here("datos", "procesados", "enaho_2025_24_06_26.parquet")
+)
+
+# ==============================================================================
+# 3. REPORTE DE VARIABLES RECODIFICADAS-----------------------------------------
+# ==============================================================================
+
+# Construimos el reporte usando el objeto de diseño muestral
+reporte_clasificar <- enaho_diseno_analitico %>%
+  tbl_svysummary(
+    # Seleccionamos explícitamente solo las variables NUEVAS que hemos creado
+    include = c(
+      formalidad_sector, formalidad_empleo, tipologia_laboral,
+      grupo_edad_teoria, quintil_ingreso, grupo_edad_datos,
+      discapacidad, afiliacion_salud, afiliacion_pensiones,
+      edad_z, indice_confianza_simple, indice_confianza_geom
+    ),
+    # Asignamos etiquetas limpias para el reporte
+    label = list(
+      formalidad_sector ~ "Sector Económico",
+      formalidad_empleo ~ "Condición de Empleo",
+      tipologia_laboral ~ "Tipología Laboral",
+      grupo_edad_teoria ~ "Edad (Criterio Teórico)",
+      quintil_ingreso ~ "Quintil de Ingreso (Criterio Datos)",
+      grupo_edad_datos ~ "Tercil de Edad (Criterio Datos)",
+      discapacidad ~ "Condición de Discapacidad",
+      afiliacion_salud ~ "Afiliación a Salud",
+      afiliacion_pensiones ~ "Afiliación a Pensiones",
+      edad_z ~ "Edad Estandarizada (Puntaje Z)",
+      indice_confianza_simple ~ "Índice de Confianza (Promedio 0-1)",
+      indice_confianza_geom ~ "Índice de Confianza (Media Geométrica 0-1)"
+    ),
+    # Configuramos qué estadísticos mostrar
+    statistic = list(
+      all_categorical() ~ "{n_unweighted} ({p}%)",
+      all_continuous() ~ "{mean} ({sd})"
+    ),
+    digits = all_continuous() ~ 2,
+    missing_text = "(Casos perdidos / NA)"
+  ) %>%
+  modify_header(label = "**Variable Construida / Recodificada**") %>%
+  modify_caption("**Reporte de Variables Analíticas de la Fase CLASIFICAR (ENAHO 2025)**") %>%
+  bold_labels()
+
+# Imprimir en el visor de RStudio
+reporte_clasificar
+
+# Exportar el reporte a Word (usando flextable para mantener el formato)
+reporte_clasificar %>%
+  as_flex_table() %>%
+  flextable::save_as_html(path = here::here("outputs", "CLASIFICAR_Reporte_VariablesCreadas.html"))
+
 
 
