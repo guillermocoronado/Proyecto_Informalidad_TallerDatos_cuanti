@@ -1,7 +1,145 @@
 ---
-title: "04_Informe_Exploracion_Inicial"
+title: "Análisis exploratorio de datos (EDA) - Proyecto Informalidad"
 author: "Guillermo Coronado"
 date: "2026-06-24"
 output: html_document
 ---
 
+```{r setup, include=FALSE}
+# Configuración global de los chunks para todo el documento
+knitr::opts_chunk$set(
+  echo = FALSE, 
+  warning = FALSE, 
+  message = FALSE, 
+  fig.align = 'center', 
+  out.width = '85%'
+)
+```
+
+# **Introducción** 
+En el presente documento se realiza un análisis exploratorio de datos (EDA) de las variables seleccionadas para el proyecto "Informalidad laboral usando datos de la ENAHO". En concreto, el presente informe detalla la estructura laboral, los niveles de protección social y las brechas que atraviesan a la Población Económicamente Activa (PEA) ocupada en el Perú. De manera más específica, se utilizan las siguientes variables:
+
+---
+
+## I. Análisis Univariado: La Estructura de la Ocupación y la Vulnerabilidad
+
+### 1. Inserción Laboral y Formalidad Empresarial
+
+```{r, fig.cap="Tabla 1: Distribución por categoría ocupacional"}
+knitr::include_graphics(here::here("outputs", "outputs_exploracion_inicial", "Tabla1_Ocupacion.png"))
+```
+
+La **Tabla 1** muestra que la estructura ocupacional peruana está fuertemente atomizada. La suma de las categorías de "Trabajador independiente" (37.4%) y de "Trabajador familiar no remunerado" (7%) revela una economía donde el autoempleo y las estrategias de supervivencia familiar prevalecen. La relación salarial clásica (empleados y obreros) representa apenas a la mitad de la PEA, lo que redefine las lógicas tradicionales de clase y capital en el país.
+
+```{r, fig.cap="Tabla 2: Tipo de registro del centro de trabajo"}
+knitr::include_graphics(here::here("outputs", "outputs_exploracion_inicial", "Tabla2_RUC.png"))
+```
+
+En relación a la formalidad de los centros de trabajo, la **Tabla 2** muestra que la informalidad empresarial no es un fenómeno marginal, sino el núcleo del modelo económico. El 63.1% de los centros de trabajo opera sin RUC. Este dato es un indicador directo de la limitada capacidad del Estado para regular las unidades productivas, fiscalizar condiciones laborales y recaudar impuestos.
+
+```{r, fig.cap="Tabla 3: Tipo de contrato laboral"}
+knitr::include_graphics(here::here("outputs", "outputs_exploracion_inicial", "Tabla3_Contrato.png"))
+```
+
+La informalidad no solo se evidencia en la falta de registro formal de las empresas, sino que también se evidencia directamente entre los trabajadores. De esta manera, la **Tabla 3** muestra que un 52.8% de trabajadores opera  bajo  "Sin contrato", lo que indica que la informalidad laboral es la norma en el país. Solo un 12.6% goza de contratos a plazo indefinido, lo que demuestra que la estabilidad laboral es un privilegio de muy pocos, dificultando la proyección económica a largo plazo de las familias.
+
+---
+
+### 2. Protección Social y Legitimidad Institucional
+
+```{r, fig.cap="Tabla 4: Afiliación a sistemas de salud"}
+knitr::include_graphics(here::here("outputs", "outputs_exploracion_inicial", "Tabla4_Salud.png"))
+```
+
+En lo que respecta a los indicadores de protección social, la **Tabla 4** muestra que el mercado laboral no está proveyendo aseguramiento contributivo. El hecho de que el 62.4% dependa del Seguro Integral de Salud (SIS) evidencia que el Estado ha tenido que asumir el rol de asegurador universal ante la incapacidad del mercado laboral para integrar a los trabajadores a sistemas formales como Essalud (27%).
+
+```{r, fig.cap="Tabla 5: Afiliación a sistemas de pensiones"}
+knitr::include_graphics(here::here("outputs", "outputs_exploracion_inicial", "Tabla5_Pensiones.png"))
+```
+
+La **Tabla 5**, por su parte, evidencia que esta baja cobertura de la protección social también se extiende al ámbito de las pensiones, ya que el 63.1% de la PEA ocupada no está afiliada a ningún sistema de pensiones. Esto significa que dos tercios de la fuerza laboral actual enfrentarán su vejez sin un ingreso de reemplazo, lo que augura un incremento drástico de la pobreza en la tercera edad durante las próximas décadas.
+
+```{r, fig.cap="Tabla 6: Ranking de confianza en instituciones"}
+knitr::include_graphics(here::here("outputs", "outputs_exploracion_inicial", "Tabla6_RankingConfianza.png"))
+```
+
+Finalmente, la **Tabla 6** muestra que existe una desafección política generalizada. En una escala donde 1 es "Nada" y 4 es "Bastante", casi todas las instituciones reprueban. Entidades clave para la democracia representativa, como los Partidos Políticos (1.27) y el Congreso de la República (1.10), muestran niveles críticos. Esto revela una profunda desconexión entre el ciudadano trabajador y el aparato estatal.
+
+---
+
+### 3. Perfil Demográfico, Bienestar y Discapacidades
+
+```{r, fig.cap="Tabla 7: Estadísticos de resumen - Edad"}
+knitr::include_graphics(here::here("outputs", "outputs_exploracion_inicial", "Tabla7_Stats_Edad.png"))
+```
+
+```{r, fig.cap="Tabla 8: Estadísticos de resumen - Ingreso Principal"}
+knitr::include_graphics(here::here("outputs", "outputs_exploracion_inicial", "Tabla8_Stats_Ingreso.png"))
+```
+
+```{r, fig.cap="Tabla 9: Tipos de dificultad o discapacidad"}
+knitr::include_graphics(here::here("outputs", "outputs_exploracion_inicial", "Tabla9_Discapacidad.png"))
+```
+
+```{r, fig.cap="Gráfico 1: Distribución de edad de la PEA ocupada"}
+knitr::include_graphics(here::here("outputs", "outputs_exploracion_inicial", "Grafico1_Edad.png"))
+```
+
+```{r, fig.cap="Gráfico 2: Distribución del ingreso principal"}
+knitr::include_graphics(here::here("outputs", "outputs_exploracion_inicial", "Grafico2_Ingreso.png"))
+```
+
+```{r, fig.cap="Gráfico 3: Confianza en el Jurado Nacional de Elecciones"}
+knitr::include_graphics(here::here("outputs", "outputs_exploracion_inicial", "Grafico3_ConfianzaJNE.png"))
+```
+
+Las **Tablas 7, 8 y 9** y los **Gráficos 1, 2 y 3** muestran que la fuerza laboral tiene una mediana de edad de 40 años, indicando cierta madurez demográfica, lo que se alinea con el hecho de que el Perú se encuentra en una etapa de culminación del bono demográfico. Por su parte, los ingresos exhiben una desigualdad abrumadora: mientras la mediana es de S/ 1,000, un pequeño grupo (el percentil 99) percibe S/ 6,200 o más. La alta dispersión (Desviación Estándar = S/ 1,310) confirma que no existe un trabajador "típico". 
+
+A esto se suma la vulnerabilidad física (Tabla 9): aunque las dificultades motrices o visuales representan porcentajes menores, en un mercado altamente informal, estas personas enfrentan dobles barreras de exclusión. Finalmente, el Gráfico 3 ilustra visualmente la asimetría en la legitimidad del árbitro electoral, dominada por los niveles "Nada" y "Poco".
+
+---
+
+## II. Análisis Bivariado: Relaciones Estructurales y Brechas
+
+### Segregación y Brechas de Género
+
+```{r, fig.cap="Tabla 10: Tipo de registro del centro de trabajo según sexo"}
+knitr::include_graphics(here::here("outputs", "outputs_exploracion_inicial", "Tabla10_RegistroSexo.png"))
+```
+
+La **Tabla 10** muestra que la inserción en el mercado laboral informal tiene un claro sesgo de género. El 65% de las mujeres labora en centros de trabajo sin RUC, en comparación con el 61.7% de los hombres. Esta diferencia estructural condena a una mayor proporción de mujeres a entornos desprovistos de beneficios sociales y licencias de maternidad.
+
+```{r, fig.cap="Tabla 11: Tipo de contrato laboral según sexo"}
+knitr::include_graphics(here::here("outputs", "outputs_exploracion_inicial", "Tabla11_ContratoSexo.png"))
+```
+
+La **Tabla 11**, pos su parte, muestra que, al observar a los trabajadores dependientes, la precarización contractual castiga desproporcionadamente a la fuerza laboral femenina. El 56.4% de las mujeres trabaja sin contrato, superando al 49.8% de los hombres. El mercado laboral actúa aquí como un amplificador de la vulnerabilidad económica femenina.
+
+---
+
+### La formalidad, el ingreso y la desconfianza en las instituciones
+
+```{r, fig.cap="Gráfico 4: Ingreso proveniente de la ocupación principal según tipo de contrato"}
+knitr::include_graphics(here::here("outputs", "outputs_exploracion_inicial", "Grafico4_Ingreso_Contrato.png"))
+```
+
+El **Gráfico 4** muestra que la formalidad jurídica tiene un premio salarial evidente. Los trabajadores con contratos a plazo indefinido concentran las medianas y distribuciones de ingreso más altas. En contraste, las categorías "Sin contrato" operan no solo en la desprotección legal, sino como una verdadera trampa de bajos ingresos.
+
+```{r, fig.cap="Gráfico 5: Ingreso según registro del centro de trabajo y sexo"}
+knitr::include_graphics(here::here("outputs", "outputs_exploracion_inicial", "Grafico5_Ingreso_RUC_Sexo.png"))
+```
+
+El **Gráfico 5** muestra que la formalización empresarial no borra las brechas de género. Incluso dentro del sector más estructurado ("Persona Jurídica"), las cajas azules (hombres) se ubican consistentemente por encima de las cajas amarillas (mujeres). La penalización salarial hacia las mujeres persiste transversalmente, demostrando que la desigualdad es interseccional.
+
+```{r, fig.cap="Gráfico 6: Nivel de confianza en el Congreso según registro del centro de trabajo"}
+knitr::include_graphics(here::here("outputs", "outputs_exploracion_inicial", "Grafico6_Confianza_Congreso.png"))
+```
+
+En contraste con lo que sucede en los gráficos anteriores, el **Gráfico 6** no muestra una relación clara entre la formalidad y la confianza en las instituciones. En otras palabras, la desconfianza no distingue estratos laborales. El abrumador color rojo ("1. Nada") domina por igual entre trabajadores de grandes empresas y aquellos en la informalidad total. La inserción formal en la economía no está integrando a los ciudadanos a un pacto social democrático sólido.
+
+```{r, fig.cap="Gráfico 7: Relación entre Edad e Ingreso Principal"}
+# Nota: La extensión original mencionada fue .jpg, ajustarla si cambió a .png
+knitr::include_graphics(here::here("outputs", "outputs_exploracion_inicial", "Grafico7_Edad_Ingreso_Scatter.png"))
+```
+
+Finalmente, el **Gráfico 7** mostraría que la trayectoria salarial del peruano no sigue una acumulación ascendente tradicional. La línea de tendencia suavizada muestra un rápido crecimiento en la juventud que se estanca tempranamente hacia los 40 años, para luego iniciar un leve declive. Esto refleja un mercado que no premia la experiencia acumulada en edades avanzadas y que, ante la falta de pensiones, obliga a muchos a aceptar ingresos menores en su etapa de adultez mayor para sobrevivir.
