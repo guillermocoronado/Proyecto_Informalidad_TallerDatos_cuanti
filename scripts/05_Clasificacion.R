@@ -5,7 +5,7 @@
 # Fecha: 24-06-2026
 # Objetivo: Crear variables analíticas con los datos seleccionados
 # =====================================================================================
-
+rm(list = ls())
 # ------------------------------------------------------------------------------
 # 0. CONFIGURACIÓN Y CARGA DE DATOS---------------------------------------------
 # ------------------------------------------------------------------------------
@@ -19,7 +19,7 @@ library(flextable)
 renv::snapshot()
 
 # Cargamos la base de datos limpia
-enaho_limpia <- read_parquet(here("datos", "procesados", "enaho_2025_19_06_26.parquet"))
+enaho_limpia <- read_parquet(here("datos", "procesados", "enaho_2025_20_06_26.parquet"))
 
 # ==============================================================================
 # 1. PREPARACIÓN DE VARIABLES ANALÍTICAS----------------------------------------
@@ -149,16 +149,13 @@ mutate(across(starts_with("confianza_"), ~na_if(., 5))) %>%
     indice_confianza_geom = (indice_confianza_geom - 1) / (4 - 1)
   )
 
+gc()
+
 # Actualizamos el diseño muestral con la nueva base analítica
 enaho_diseno_analitico <- enaho_analitica %>%
   filter(!is.na(factorA07)) %>%
   as_survey_design(ids = conglome, strata = estrato, weights = factorA07, nest = TRUE)
 
-# ==============================================================================
-# 2. EXPORTAR BASE DE DATOS ANALÍTICA-------------------------------------------
-# ==============================================================================
-
-# Guardamos la base con las nuevas variables creadas
 # ==============================================================================
 # 2. EXPORTAR BASE DE DATOS ANALÍTICA
 # ==============================================================================
