@@ -68,7 +68,7 @@ enaho_explorar <- enaho_limpia %>%
   mutate(across(starts_with("confianza_"), ~na_if(., 9)))     # 9 = Missing
 
 #Guardamos esta base de datos con las etiquetas creadas
-write_parquet(enaho_explorar, "datos/procesados/enaho_2025_20_06_26")
+write_parquet(enaho_explorar, "datos/procesados/enaho_2025_20_06_26.parquet")
 
 # ------------------------------------------------------------------------------
 # 2. DISEÑO MUESTRAL------------------------------------------------------------
