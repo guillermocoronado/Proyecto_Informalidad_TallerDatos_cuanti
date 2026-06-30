@@ -25,12 +25,12 @@ renv::snapshot()
 enaho_final <- read_parquet(here("datos", "procesados", "enaho_2025_24_06_26.parquet"))
 
 # ==============================================================================
-# 1. INYECCIÓN DE METADATOS (EL "ADN" DEL DATASET)
+# 1. INYECTAMOS LOS METADATOS---------------------------------------------------
 # ==============================================================================
 # Un codebook requiere la etiqueta descriptiva y la fuente original de cada variable.
 # Usamos var_label() para darles un nombre humano y coherente.
 
-# A. Variables Base Exploradas (Crudas y Etiquetadas)
+# A. Variables Base Exploradas (Etiquetadas)
 var_label(enaho_final$edad) <- "Edad del encuestado (Fuente: P208A)"
 var_label(enaho_final$sexo) <- "Sexo del encuestado (Fuente: P207)"
 var_label(enaho_final$tiene_ruc_etiqueta) <- "Registro en SUNAT del centro de trabajo (Fuente: P510A1)"
@@ -41,8 +41,8 @@ var_label(enaho_final$ingreso_prin_imputado) <- "Ingreso total ocupación princi
 
 # B. Variables Analíticas (Clasificadas)
 var_label(enaho_final$formalidad_sector) <- "Tipología: Formalidad del Sector Económico"
-var_label(enaho_final$formalidad_empleo) <- "Tipología: Formalidad de la Condición de Empleo"
-var_label(enaho_final$tipologia_laboral) <- "Tipología MECE: Matriz Multidimensional de Informalidad"
+var_label(enaho_final$formalidad_empleo) <- "Tipología: Formalidad del Empleo"
+var_label(enaho_final$tipologia_laboral) <- "Tipología: Matriz Multidimensional de Informalidad"
 var_label(enaho_final$grupo_edad_teoria) <- "Grupo de Edad (Cortes Teóricos)"
 var_label(enaho_final$quintil_ingreso) <- "Quintil de Ingresos (Corte Estadístico)"
 var_label(enaho_final$edad_z) <- "Edad estandarizada (Puntaje Z)"
@@ -74,26 +74,29 @@ for (var in names(dict_metadata)) {
 # ==============================================================================
 
 # ------------------------------------------------------------------------------
-# OPCIÓN A: El paquete 'dataMaid' (Auditoría rápida)
+# OPCIÓN A: El paquete 'dataMaid' (Reporte rápido)
 # ------------------------------------------------------------------------------
-# Ideal para que los estudiantes detecten anomalías finales antes de publicar.
+# Ideal para quienes detecten anomalías finales antes de publicar.
 # Genera un PDF/HTML con la distribución, NAs y valores atípicos.
 
 makeDataReport(
-  enaho_final, 
-  output = "html", 
-  file = here("outputs", "Auditoria_Datos_dataMaid.html"),
+  enaho_final,
+  output = "html",
+  # Cambiamos la extensión a .Rmd para evitar el warning
+  file = here("outputs", "CodeBook_dataMaid.Rmd"),
   replace = TRUE,
-  # Filtramos solo las variables de interés para que el reporte no sea inmenso
-  vars = c("edad", "sexo", "tiene_ruc_etiqueta", "categoria_ocupacional_etiqueta", 
-           "ingreso_prin_imputado", "tipologia_laboral", "indice_confianza_simple"),
-  reportTitle = "Auditoría de Datos: Informalidad Laboral ENAHO 2025"
+  # Filtramos solo las variables de interés (quitando el duplicado al final)
+  vars = c("edad", "sexo", "tiene_ruc_etiqueta", "categoria_ocupacional_etiqueta", "tipo_contrato_etiqueta",
+           "formalidad_sector", "formalidad_empleo", "grupo_edad_teoria", "quintil_ingreso",
+           "afiliacion_salud", "afiliacion_pensiones", "indice_confianza_simple",
+           "ingreso_prin_imputado", "tipologia_laboral"),
+  reportTitle = "CodeBook del proyecto - Análisis de la Informalidad Laboral utilizando datos de la ENAHO 2025"
 )
 
 # ------------------------------------------------------------------------------
 # OPCIÓN B: El paquete 'codebook' (El estándar de Ciencia Abierta)
 # ------------------------------------------------------------------------------
-# Genera el "ADN del dataset" completo, incluyendo frecuencias, tipos, etiquetas 
+# Genera un CodeBook más completo, incluyendo frecuencias, tipos, etiquetas 
 # y estadísticos básicos de manera interactiva.
 
 # Seleccionamos las variables objetivo para el codebook final
