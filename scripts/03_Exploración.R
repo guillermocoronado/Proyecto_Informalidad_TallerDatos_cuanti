@@ -19,10 +19,11 @@ library(srvyr)
 library(flextable)   
 library(scales)      
 library(officer)
+library(here)
 renv::snapshot()
 
 # Cargamos la base de datos limpia (ACONDICIONADA)
-enaho_limpia <- read_parquet("datos/procesados/enaho_2025_19_06_25.parquet")
+enaho_limpia <- read_parquet(here("datos", "procesados", "enaho_2025_19_06_26.parquet"))
 
 # ------------------------------------------------------------------------------
 # 1. PREPARACIÓN DE ETIQUETAS--------------------------------------------------- 
@@ -65,6 +66,9 @@ enaho_explorar <- enaho_limpia %>%
   # D. Limpieza de NAs en Confianza Institucional (Cruda 1 a 4) - Recordemos cómo lo tratamos en realidad!
   mutate(across(starts_with("confianza_"), ~na_if(., 5))) %>% # 5 = No sabe
   mutate(across(starts_with("confianza_"), ~na_if(., 9)))     # 9 = Missing
+
+#Guardamos esta base de datos con las etiquetas creadas
+write_parquet(enaho_explorar, "datos/procesados/enaho_2025_20_06_26")
 
 # ------------------------------------------------------------------------------
 # 2. DISEÑO MUESTRAL------------------------------------------------------------
