@@ -35,7 +35,7 @@ enaho_limpia <- enaho_limpia %>%
     edad = as.numeric(edad)
   )
 
-# Calculamos valores ponderados globales necesarios para la estandarización
+# Calculamos valores ponderados globales necesarios para la estandarización (edad Z)
 media_edad_pond <- weighted.mean(enaho_limpia$edad, enaho_limpia$factorA07, na.rm = TRUE)
 sd_edad_pond <- sqrt(Hmisc::wtd.var(enaho_limpia$edad, enaho_limpia$factorA07, na.rm = TRUE))
 
