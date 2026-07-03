@@ -5,8 +5,8 @@ Este respositorio incluye el código y el flujo de trabajo completo del "Informe
 Se utilizan datos de la Encuesta Nacional de Hogares (ENAHO) de 2021 a 2025 trabajados integramente en R
 
 El análisis explora la relación entre la formalidad y las siguientes dimensiones:
-**Demográficas**: Quintiles de ingreso, grupos de edad, nivel educativo, lengua materna y ubicación geográfica
-**Institucionales y de seguridad social**: Confianza en las instituciones, salud (aseguramiento, acceso, gasto de bolsillo) y pensiones
+- **Demográficas**: Quintiles de ingreso, grupos de edad, nivel educativo, lengua materna y ubicación geográfica
+- **Institucionales y de seguridad social**: Confianza en las instituciones, salud (aseguramiento, acceso, gasto de bolsillo) y pensiones
 
 ## Programas y librerías utilizadas
 El proyecto está desarrollado utilizando la versión 4.5.3 de **R**, con las siguientes librerías:
