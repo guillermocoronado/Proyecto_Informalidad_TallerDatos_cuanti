@@ -1,9 +1,9 @@
 # README: Análisis de la informalidad laboral utilizando datos de la ENAHO
 
-## Autor: Guillermo Coronado
-## Curso: Taller de Procesamiento de Datos
-## Encuesta: Encuesta Nacional de Hogares, Instituto Nacional de Estadística e Informática, 2025 (anual)
-## Módulos utilizados: Módulo 300 (Educación), Módulo 400 (Salud), Módulo 500 (Empleo e ingresos) y Módulo 85 (Gobernabilidad, Democracia y Transparencia) parte 1 (Confianza en las instituciones)
+### Autor: Guillermo Coronado
+### Curso: Taller de Procesamiento de Datos
+### Encuesta: Encuesta Nacional de Hogares, Instituto Nacional de Estadística e Informática, 2025 (anual)
+### Módulos utilizados: Módulo 300 (Educación), Módulo 400 (Salud), Módulo 500 (Empleo e ingresos) y Módulo 85 (Gobernabilidad, Democracia y Transparencia) parte 1 (Confianza en las instituciones)
 
 ## Descripción del proyecto
 Este respositorio incluye el código y el flujo de trabajo completo del "Informe sobre la situación de la informalidad laboral en Perú de 2021 a 2025" elaborado para el curso de Taller de Procesamiento de Datos 2026-1 de la PUCP.
