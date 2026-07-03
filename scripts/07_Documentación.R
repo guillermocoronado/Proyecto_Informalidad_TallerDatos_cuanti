@@ -57,27 +57,33 @@ var_label(enaho_codebook$sexo) <- "Sexo del encuestado (Fuente: P207)"
 var_label(enaho_codebook$tiene_ruc_etiqueta) <- "Registro en SUNAT del centro de trabajo (Fuente: P510A1)"
 var_label(enaho_codebook$categoria_ocupacional_etiqueta) <- "Categoría Ocupacional Principal (Fuente: P507)"
 var_label(enaho_codebook$tipo_contrato_etiqueta) <- "Tipo de Contrato Laboral (Fuente: P511A)"
-var_label(enaho_codebook$ingreso_prin_imputado) <- "Ingreso total ocupación principal (Soles corrientes) (Fuente: P524A1)"
+var_label(enaho_codebook$ingreso_prin_imputado) <- "Ingreso total mensual proveniente de la -ocupación principal (Soles corrientes) (Fuente: P524A1)"
 
 # B. Variables Analíticas (Clasificadas)
-var_label(enaho_codebook$formalidad_sector) <- "Tipología: Formalidad del Sector Económico"
-var_label(enaho_codebook$formalidad_empleo) <- "Tipología: Formalidad de la Condición de Empleo"
-var_label(enaho_codebook$tipologia_laboral) <- "Tipología MECE: Matriz Multidimensional de Informalidad"
-var_label(enaho_codebook$grupo_edad_teoria) <- "Grupo de Edad (Cortes Teóricos)"
-var_label(enaho_codebook$quintil_ingreso) <- "Quintil de Ingresos (Corte Estadístico)"
+var_label(enaho_codebook$formalidad_sector) <- "Formalidad del Centro de Empleo"
+var_label(enaho_codebook$formalidad_empleo) <- "Formalidad laboral"
+var_label(enaho_codebook$tipologia_laboral) <- "Profundidad de la Informalidad"
+var_label(enaho_codebook$grupo_edad_teoria) <- "Grupo de Edad (Cortes segúm metodología INEI)"
+var_label(enaho_codebook$quintil_ingreso) <- "Quintil de Ingresos (a partir de ingreso_prin_imputado)"
 var_label(enaho_codebook$afiliacion_salud) <- "Condición de afiliación al sistema de salud"
-var_label(enaho_codebook$afiliacion_pensiones) <- "Tipo de sistema previsional afiliado"
+var_label(enaho_codebook$afiliacion_pensiones) <- "Tipo de sistema previsional al cual está afiliado"
 var_label(enaho_codebook$indice_confianza_simple) <- "Índice de Confianza Institucional (Promedio Normalizado 0-1)"
 
 # ==============================================================================
-# 3. DOCUMENTACIÓN DE DECISIONES METODOLÓGICAS (TRATAMIENTO DE NAs)
+# 3. DOCUMENTACIÓN DE DECISIONES METODOLÓGICAS 
 # ==============================================================================
 
 # Diccionario de decisiones metodológicas
 dict_metadata <- list(
   ingreso_prin_imputado = "Los valores 999999 se recodificaron a NA. Los casos perdidos (MNAR) fueron imputados usando el algoritmo MICE condicionado al nivel educativo.",
   tipologia_laboral = "Construida a partir del cruce de formalidad_sector (proxy: RUC) y formalidad_empleo (proxy: Categoría ocupacional y tipo de contrato).",
-  indice_confianza_simple = "Promedio simple de 21 instituciones. Escala original re-escalada al rango [0, 1] mediante normalización Min-Max. NAs imputados con la mediana."
+  indice_confianza_simple = "Promedio simple de 21 instituciones, construido a partir de las variables 'P1$01' a 'P1$21'. Cada variable aplica un puntaje de 1 a 4 donde '1' es nada de confianza y '4' es mucha confianza. Tras sumar los puntajes, la escala original fue re-escalada al rango [0, 1] mediante normalización Min-Max. NAs imputados con la mediana.",
+  formalidad_sector = "Un centro de empleo es informal si no tiene ningún tipo de registro en la SUNAT según la variable tiene_ruc_etiqueta",
+  formalidad_empleo = "Un trabajador es informal si: i) es trabajador familiar no remunerado según variable categoria_ocupacional_etiqueta, (ii) es independiente o empleador y su centro de trabajo es informal según formalidad_sector, (iii) es dependiente (obrero, empleado, trabajador del hogar u otro) y no tiene contrato según variable tiene_contrato_etiqueta",
+  grupo_edad_teoria = "Se utilizan los grupos de edad definidos por el INEI en sus informes de principales resultados de la ENAHO",
+  afiliacion_salud = "Una persona está afiliada a un régimen de salud si respondió '1' en alguna de las preguntas de la P491 a la P4198 de la ENAHO",
+  afiliacion_pensiones = "Una persona está afiliada al Sistema Privado de Pensiones si respondió '1' en la variable P558A1 de la ENAHO; está afiliada a algún régimen público si respondió que está afiliado a alguna de las preguntas de la P558A2 a la P558A4; una persona no está afiliada a ningún sistema previsional si respondió '5' a la pregunta P558A5",
+  tipologia_laboral = "Construida a partir del cruce de variables 'formalidad_sector' y 'formalidad_empleo'. Un trabajador es 'formal absoluto' si su empleo es formal y trabaja en un centro de trabajo formal; es 'Informal en sector formal' cuando su empleo es informal pero trabaja en un centro de trabajo formal; es 'Formal en sector informal' cuando su empleo es formal pero su centro de trabajo es informal; es 'Informal en sector informal' cuando tanto su empleo como su centro de trabajo son informales."
 )
 
 # Aplicamos las descripciones iterativamente a las columnas correspondientes
