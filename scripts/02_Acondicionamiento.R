@@ -20,7 +20,7 @@ renv::snapshot()
 # 1. CARGA, SELECCIÓN, RENOMBRADO Y DIAGNÓSTICO---------------------------------
 # ------------------------------------------------------------------------------
 # Leemos la base que consolidamos la clase pasada en formato parquet. 
-enaho_raw <- read_parquet("datos/procesados/enaho_2025_120626.parquet")
+enaho_raw <- read_parquet("datos/procesados/enaho_2025_12_06_26.parquet")
 
 #Seleccionamos las variables de nuestro interés (así trabajamos con una base menos pesada)
 #Al mismo tiempo que seleccionamos, renombramos usando las herramientas de dplyr
