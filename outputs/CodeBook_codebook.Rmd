@@ -1,0 +1,32 @@
+---
+title: "Codebook: Análisis de la Informalidad Laboral en el Perú usando la ENAHO 2025"
+author: "Guillermo Coronado"
+date: "2026-06-30"
+output:
+  html_document:
+    toc: true
+    toc_depth: 3
+    toc_float: true
+---
+
+# Introducción
+[Acá describimos todo el contexto del proyecto]
+
+```{r setup, include=FALSE}
+# Este bloque carga los datos y no se mostrará en el documento final
+library(tidyverse)
+library(arrow)
+library(codebook)
+library(here)
+
+enaho_codebook <- read_parquet(here("datos", "procesados", "enaho_2025_02_07_27.parquet"))
+```
+
+# Libro de Códigos
+
+A continuación se presenta la descripción estadística y metodológica de cada variable:
+
+```{r generar_codebook, echo=FALSE, warning=FALSE, message=FALSE}
+# Este bloque imprime el codebook real
+codebook(enaho_codebook)
+```
