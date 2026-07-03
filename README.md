@@ -44,6 +44,9 @@ El directorio se organiza a través de la siguiente estructura de carpetas:
 │   ├── CodeBook_dataMaid.html                           # Libro de códigos final creado con paquete ´dataMaid´ (exportación del script 07)
 │   ├── CodeBook_dataMaid.Rmd                            # Archivo RMarkdown para la generación del libro de códigos con paquete ´dataMaid´
 │   └── EXPLORACIÓN_Informe_EDA_Inicial.html             # Informe descriptivo inicial compilado en HTML (exportación del script 03)
+├── docs/                                                # Documentos técnicos de la ENAHO 2025
+│   ├── Diccionario_ENAHO_2025     # Diccionario de datos de la ENAHO 2025
+│   ├── Ficha_Tecnica_ENAHO_2025   # Ficha técnica de la ENAHO 2025
 ├── renv/                       # Carpeta aislada del entorno local de paquetes
 ├── renv.lock                   # Registro exacto de las versiones de las librerías
 ├── .gitignore                  # Configuración de exclusión para evitar la subida de datos masivos al repositorio
