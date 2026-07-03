@@ -1,4 +1,4 @@
-# Análisis de la informalidad laboral utilizando datos de la ENAHO
+# README: Análisis de la informalidad laboral utilizando datos de la ENAHO
 
 ## Descripción del proyecto
 Este respositorio incluye el código y el flujo de trabajo completo del "Informe sobre la situación de la informalidad laboral en Perú de 2021 a 2025" elaborado para el curso de Taller de Procesamiento de Datos 2026-1 de la PUCP.
